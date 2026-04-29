@@ -1,0 +1,51 @@
+{
+  "name": "com.kinoa.sdk.core",
+  "version": "2.16.0",
+  "displayName": "Kinoa SDK (Core)",
+  "description": "The best SaaS platform for managing mobile games activities, such as segmentation, communication with players, AB testing, monetization campaigns, etc...",
+  "unity": "2021.2",
+  "changelogUrl": "https://bitbucket.org/kinoa-team/kinoa-cdn/src/master/kinoa-sdk-v.1.4.5/CHANGELOG.md",
+  "documentationUrl": "https://drive.google.com/file/d/10no1lT7n-3IG_IRFoeF8C-6-XYQ0sOtJ/view?usp=sharing",
+  "licensesUrl": "https://bitbucket.org/kinoa-team/kinoa-cdn/src/master/kinoa-sdk-v.1.4.5/LICENSE.md",
+  "dependencies": {
+  },
+  "keywords": [
+    "kinoa",
+    "sdk",
+    "pixode",
+    "analytic"
+  ],
+  "author": {
+    "name": "Kinoa",
+    "email": "m.kitela@kinoa.io",
+    "url": "https://kinoa.io"
+  },
+  "samples": [
+    {
+      "displayName": "Kinoa Data Models",
+      "description": "Contains the data models used in the samples.",
+      "path": "Samples/Data"
+    },
+    {
+      "displayName": "Kinoa Providers",
+      "description": "Contains sample Kinoa providers.",
+      "path": "Samples/Providers"
+    },
+    {
+      "displayName": "Kinoa Controllers",
+      "description": "Contains the sample services controllers.",
+      "path": "Samples/Controllers"
+    },
+    {
+      "displayName": "Kinoa Services",
+      "description": "Contains sample Kinoa services.",
+      "path": "Samples/Services"
+    },
+    {
+      "displayName": "Kinoa Utils",
+      "description": "Contains the helper classes used in the samples.",
+      "path": "Samples/Utils"
+    }
+  ],
+  "hideInEditor": false
+}
