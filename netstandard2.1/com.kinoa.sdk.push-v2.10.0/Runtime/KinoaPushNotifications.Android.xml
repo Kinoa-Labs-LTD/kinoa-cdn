@@ -1,0 +1,469 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>KinoaPushNotifications.Android</name>
+    </assembly>
+    <members>
+        <member name="T:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient">
+            <summary>
+                Firebase push notification sample client.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.#ctor(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient"/>
+            </summary>
+            <param name="withFirebaseAppCheckAndFixDependency"> Indicates if Kinoa needs to call FirebaseApp.CheckAndFixDependenciesAsync.</param>
+            <param name="withRequestPermission">Indicates if Kinoa needs to call FirebaseMessaging.RequestPermissionAsync.</param>
+            <param name="withTokenRequest">Indicates if Kinoa needs to call FirebaseMessaging.GetTokenAsync on application startup. Default values is false, token saved to PlayersPref will be used.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.Initialize(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+                Initialize the new instance of FirebasePushNotificationClient.
+            </summary>
+            <param name="withFirebaseAppCheckAndFixDependency"> Indicates if Kinoa needs to call FirebaseApp.CheckAndFixDependenciesAsync.</param>
+            <param name="withRequestPermission">Indicates if Kinoa needs to call FirebaseMessaging.RequestPermissionAsync.</param>
+            <param name="withTokenRequest">Indicates if Kinoa needs to call FirebaseMessaging.GetTokenAsync on application startup. Default values is false, token saved to PlayersPref will be used.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.SetupEventHandlers">
+            <summary>
+                Setups push notifications service game event handlers.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.SubscribeToTopicAsync(System.String)">
+            <summary>
+                Subscribe to receive all messages to the specified topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.UnsubscribeFromTopicAsync(System.String)">
+            <summary>
+                Unsubscribes from a topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Clients.FirebasePushNotificationClient.RequestTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers device token in Kinoa.
+                Use on device registration token update, when custom in-game FCM implementation already exists
+                but Kinoa push notifications services are needed.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData">
+            <summary>
+                Kinoa Android notification intent data.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData.NotificationSource">
+            <summary>
+                Android notification source.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData.NotificationId">
+            <summary>
+                Android notification identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData.ChannelId">
+            <summary>
+                Android notification channel identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData.Data">
+            <summary>
+                Android notification extra data.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationSource">
+            <summary>
+                KinoaAndroidNotificationSource class.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationSource.Unknown">
+            <summary>
+                Unknown notification source.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationSource.Local">
+            <summary>
+                Local notification.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationSource.Firebase">
+            <summary>
+                Firebase Listener notification.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationSource.Kinoa">
+            <summary>
+                Kinoa Listener notification.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.FirebaseCloudMessaging">
+            <summary>
+                Firebase Cloud Messaging service.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.AutoInitEnabled">
+            <summary>
+                Is auto initialization enabled.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.OnInitializationCompleted">
+            <summary>
+                On Firebase Cloud Messaging push notifications APP initialization completed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.OnInitializationFailed">
+            <summary>
+                On Firebase Cloud Messaging push notifications APP initialization failed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.OnRegistrationTokenUpdated">
+            <summary>
+                On Firebase Cloud Messaging registration token updated.
+                Returns FCM push token for a current device.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.OnPushNotificationReceived">
+            <summary>
+                On push notification message received.
+                Return received FirebaseMessage.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.Initialize(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+                Initializes Firebase Cloud Messaging service.
+                Prevent FCM auto initialization (firebase_messaging_auto_init_enabled)
+                in Info.plist - iOS or AndroidManifest.xml - on Android devices
+                and use the <see cref="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.Initialize(System.Boolean,System.Boolean,System.Boolean)"/> method to process device registration token by Kinoa.
+            </summary>
+            <param name="withFirebaseAppCheckAndFixDependency"> Indicates if Kinoa needs to call FirebaseApp.CheckAndFixDependenciesAsync.</param>
+            <param name="withRequestPermission">Indicates if Kinoa needs to call FirebaseMessaging.RequestPermissionAsync.</param>
+            <param name="withTokenRequest">Indicates if Kinoa needs to call FirebaseMessaging.GetTokenAsync on application startup. Default values is false, token saved to PlayersPref will be used.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.SubscribeToTopicAsync(System.String)">
+            <summary>
+                Subscribe to receive all messages to the specified topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.UnsubscribeFromTopicAsync(System.String)">
+            <summary>
+                Unsubscribes from a topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.RequestTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers FCM device token in Kinoa.
+                Use on device registration token update, when custom in-game FCM implementation already exists
+                but Kinoa push notifications services are needed.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.FirebaseCloudMessaging.RequestTokenAsync">
+            <summary>
+                Requests FCM registration token for the current device.
+                You can send the same request again to update the current authorization status.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient">
+            <summary>
+                Cross-platform and base push notifications client.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient.FcmService">
+            <summary>
+                FcmService instance.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient.Instance">
+            <summary>
+                Singleton PushClient instance.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient.#ctor">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient.OnActivePlayerChanged(System.String)">
+            <summary>
+                On Active Player Changed handler.
+            </summary>
+            <param name="previousPlayerId">Previous Player ID.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.PushNotificationsClient.RequestFcmTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers FCM device token on Kinoa.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Logic.Services.FcmService">
+            <summary>
+                Firebase cloud messaging service.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Android.Logic.Services.FcmService.isInitialized">
+            <summary>
+                Is service initialized.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnInitializationFailed">
+            <summary>
+                On FCM push notifications APP initialization failed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnInitializationCompleted">
+            <summary>
+                On FCM push notifications APP initialization successfully completed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnRegistrationTokenUpdated">
+            <summary>
+                On FCM registration token updated.
+                Return FCM push token for a current device.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnPushNotificationReceived">
+            <summary>
+                On FCM push notification message received.
+                Return received FirebaseMessage.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Android.Logic.Services.FcmService.App">
+            <summary>
+                Firebase app instance.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Android.Logic.Services.FcmService"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.Initialize(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+                Initializes firebase app with dependencies.
+                The Firebase Unity SDK for Android requires Google Play services,
+                which must be up-to-date before the SDK can be used.
+            </summary>
+            <param name="withFirebaseAppCheckAndFixDependency"> Indicates if Kinoa needs to call FirebaseApp.CheckAndFixDependenciesAsync.</param>
+            <param name="withRequestPermission">Indicates if Kinoa needs to call FirebaseMessaging.RequestPermissionAsync.</param>
+            <param name="withTokenRequest">Indicates if Kinoa needs to call FirebaseMessaging.GetTokenAsync on application startup. Default values is false, token saved to PlayersPref will be used.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.RequestTokenDeletion(System.String,System.String)">
+            <summary>
+                Delete FCM token on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="reason">Deletion reason.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.RequestTokenRegistration(System.String)">
+            <summary>
+                Request FCM token registration on Kinoa.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.RequestTokenAsync">
+            <summary>
+                Creates a FirebaseInstallations ID, if one does not exist, and sends information
+                about the application and the device where it's running to the Firebase and Kinoa backend.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.DeleteTokenAsync">
+            <summary>
+                Deleted the FCM registration token for the current device manually.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.SubscribeToTopicAsync(System.String)">
+            <summary>
+                Subscribe to receive all messages to the specified topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.UnsubscribeFromTopicAsync(System.String)">
+            <summary>
+                Unsubscribes from a topic async.
+            </summary>
+            <param name="topic">The topic.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.SetupEventHandlers(System.Boolean)">
+            <summary>
+                Setups message event handlers.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.CheckLastNotificationIntent(System.Boolean)">
+            <summary>
+                Checks last responded notification.
+            </summary>
+            <param name="fromClosedApp">Indicates if push clicked when app is closed.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.UpdateFcmToken(System.Boolean)">
+            <summary>
+                Checks if token is expired (1 month).
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnDestroy">
+            <summary>
+                Ends messaging session when the program exits.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnTokenReceivedAutomatically(System.Object,Firebase.Messaging.TokenReceivedEventArgs)">
+            <summary>
+                On FCM token received automatically.
+            </summary>
+            <param name="sender"></param>
+            <param name="token"></param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnTokenReceived(System.String)">
+            <summary>
+                On the new FCM registration token successfully received.
+            </summary>
+            <param name="token">The new FCM token.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnMessageReceived(System.Object,Firebase.Messaging.MessageReceivedEventArgs)">
+            <summary>
+                On push notification message received.
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.SetPrefsToken(System.String,System.String)">
+            <summary>
+                Saves token and registration time in PlayerPrefs.
+            </summary>
+            <param name="token">The new FCM token.</param>
+            <param name="time">The token registration time.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.OnApplicationResumed">
+            <summary>
+                OnApplicationResumed handler.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Services.FcmService.LogTaskCompletion(System.Threading.Tasks.Task,System.String)">
+            <summary>
+                Logs the result of the specified task.
+            </summary>
+            <param name="task"></param>
+            <param name="operation"></param>
+            <returns>True if the task completed successfully, false otherwise.</returns>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter">
+            <summary>
+                KinoaAndroidNotificationCenter provides additional functionality for Kinoa notification.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.RequestNotificationsPermission">
+            <summary>
+                Shows request notification permission dialog for Android API level 33+.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.GetDeliveredNotifications">
+            <summary>
+                Gets intent data for delivered notifications.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.DismissDeliveredNotificationsOnInitialization">
+            <summary>
+                Dismisses delivered notification from notification center.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.CheckIsNeededToDismiss(Kinoa.PushNotifications.Android.Data.KinoaAndroidNotificationIntentData)">
+            <summary>
+                Check if notification could be dismissed.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.GetLastNotificationIntent">
+            <summary>
+                Gets last opened notification intent data.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.GetNotificationIdentifier(UnityEngine.AndroidJavaObject,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Gets notification identifier from intent extras.
+            </summary>
+            <param name="extras">Extras AndroidJavaObject.</param>
+            <param name="data">Notification extra data.</param>
+            <returns>Notification identifier.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.GetNotificationData(UnityEngine.AndroidJavaObject)">
+            <summary>
+                Gets notification identifier from intent extras.
+            </summary>
+            <param name="activeNotification">Notification AndroidJavaObject.</param>
+            <returns>Notification data.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.GetData(UnityEngine.AndroidJavaObject)">
+            <summary>
+                Gets custom parameters from extras of notification.
+            </summary>
+            <param name="extras">Extras AndroidJavaObject.</param> 
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.RegisterDefaultNotificationChannel(KinoaAndroidNotificationChannel)" -->
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.RegisterSoundNotificationChannel(KinoaAndroidNotificationChannel,System.String)">
+            <summary>
+                Registers notification channel with sound. Channel id will be equal to sound parameter.
+                From Android O, notification sounds became a property of notification channels.
+                This method will define the sound for a channel and
+                then use Kinoa dashboard to select the proper channel when sending your notifications - Design/Android/AdvancedSettings/Sound.
+            </summary>
+            <param name="notificationChannel">Kinoa android notification channel.</param>
+            <param name="sound">Sound name.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.DeleteNotificationChannel(System.String)">
+            <summary>
+                Deletes notification channel with provided channel id.
+                If you  create a new channel with this same id, the deleted channel will be un-deleted with all of the same settings it
+                had before it was deleted.
+            </summary>
+            <param name="channelId">Notification channel id.</param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.DeleteDefaultNotificationChannel" -->
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationCenter.AreNotificationsEnabled">
+            <summary>
+                Checks whether notifications from the calling package are enabled.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationChannelIdProvider">
+            <summary>
+                Kinoa Android notification channel id provider.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Android.Logic.Utils.KinoaAndroidNotificationChannelIdProvider.CreateAndProvide(Unity.Notifications.Android.AndroidNotificationChannel)">
+            <summary>
+                Creates custom android notification channel and returns its identifier.
+            </summary>
+            <param name="androidNotificationChannel">Android notification channel.</param>
+            <returns></returns>
+        </member>
+        <member name="P:KinoaAndroidNotificationChannel.Name">
+            <summary>
+            Notification channel name which is visible to users.
+            </summary>
+        </member>
+        <member name="P:KinoaAndroidNotificationChannel.Description">
+            <summary>
+            User visible description of the notification channel.
+            </summary>
+        </member>
+        <member name="P:KinoaAndroidNotificationChannel.Importance">
+            <summary>
+            Importance level which is applied to all notifications sent to the channel.
+            This can be changed by users in the settings app. Android uses importance to determine how much the notification should interrupt the user (visually and audibly).
+            The higher the importance of a notification, the more interruptive the notification will be.
+            The possible importance levels are the following:
+               High: Makes a sound and appears as a heads-up notification.
+               Default: Makes a sound.
+               Low: No sound.
+               None: No sound and does not appear in the status bar.
+            </summary>
+        </member>
+    </members>
+</doc>

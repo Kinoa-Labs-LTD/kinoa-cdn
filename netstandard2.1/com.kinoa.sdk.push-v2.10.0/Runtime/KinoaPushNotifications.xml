@@ -1,0 +1,861 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>KinoaPushNotifications</name>
+    </assembly>
+    <members>
+        <member name="T:Kinoa.PushNotifications.Clients.PushNotificationClient`1">
+            <summary>
+                Push notification client.
+            </summary>
+            <typeparam name="TNotification">Type of incoming notifications.</typeparam>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient`1.OnPushNotificationReceived(`0)">
+            <summary>
+                On push notification message received.
+            </summary>
+            <param name="notification">Notification message.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Clients.PushNotificationClient">
+            <summary>
+                Push notification client.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient.RequestTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers device token in Kinoa.
+                Use on device registration token update,
+                when custom in-game push notification client implementation already exists
+                but Kinoa push notifications services are needed.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient.SetupEventHandlers">
+            <summary>
+                Setups push notifications service game event handlers.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient.OnInitializationCompleted">
+            <summary>
+                On push notifications service initialization completed.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient.OnInitializationFailed">
+            <summary>
+                On push notifications service initialization failed.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Clients.PushNotificationClient.OnRegistrationTokenUpdated(System.String)">
+            <summary>
+                On push notifications service device registration token updated.
+                Please remember to renew your topics subscription
+                using <see cref="!:FirebaseCloudMessaging.SubscribeToTopicAsync"/> if the new registration token received.
+            </summary>
+            <param name="token">Device token.</param>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.PushServiceUrl">
+            <summary>
+                Kinoa push service base URL.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.DevicesPath">
+            <summary>
+                Devices endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.InfoPath">
+            <summary>
+                Personalization information endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.ClickAnalyticPath">
+            <summary>
+                Click analytic endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.BlockPushPath">
+            <summary>
+                Block pushes endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.UnblockPushPath">
+            <summary>
+                Unblock pushes endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.GetPushStatusPath">
+            <summary>
+                Get pushes status endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Core.Network.NetworkConfig.BadgeCounterPath">
+            <summary>
+                Badge counter endpoint.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Core.Utils.KinoaPushNotificationProcessor">
+            <summary>
+                Kinoa push notification processor.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Core.Utils.KinoaPushNotificationProcessor.ProcessLastRespondedNotification(System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean)">
+            <summary>
+                Process last responded push notification.
+            </summary>
+            <param name="notificationIdentifier">Push notification ID.</param>
+            <param name="data">Push notification data payload.</param>
+            <param name="fromClosedApp">Indicates if push clicked when app is closed.</param>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.Constants.CacheConstants.FcmRegistrationToken">
+            <summary>
+                Firebase Cloud Messaging registration token.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.Constants.CacheConstants.FcmRegistrationTokenTimestamp">
+            <summary>
+                Firebase Cloud Messaging registration token timestamp in milliseconds.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.ExtraDataKey">
+            <summary>
+                Push notification extra data key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.CampaignIdKey">
+            <summary>
+                Push notification campaign id key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.IterationNumberKey">
+            <summary>
+                Push notification iteration number key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.DismissPushKey">
+            <summary>
+                Push notification dismiss push key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.InAppDataKey">
+            <summary>
+                Push notification InApp data key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.ImageUrlKey">
+            <summary>
+                Push notification image URL key.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Constants.NotificationMessageConstants.InternalLinkKey">
+            <summary>
+                Push notification InternalLink key.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.Constants.PushInfoConstants">
+            <summary>
+                Push info constants.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType">
+            <summary>
+                Kinoa push notification internal link type
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType.Unknown">
+            <summary>
+                Unknown type.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType.Addressable">
+            <summary>
+                Address of the game asset.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType.WebUrl">
+            <summary>
+                Link to web url.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType.LocalPath">
+            <summary>
+                Local path / internal link / deep link.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.KinoaPushInternalLinkType.Text">
+            <summary>
+                Text.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.Enum.PushNotificationProvider">
+            <summary>
+                Push notifications provider.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.PushNotificationProvider.Fcm">
+            <summary>
+                Firebase Cloud Messaging.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.Data.Enum.PushNotificationProvider.Apn">
+            <summary>
+                Apple Push Notifications.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.Events.PushClickedEventData">
+            <summary>
+                Push clicked event data.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.Events.PushClickedEventData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.Events.PushClickedEventData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.Events.PushClickedEventData.#ctor(Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData,System.Boolean)">
+            <summary>
+                Initialize a new instance of <see cref="T:Kinoa.PushNotifications.Data.Events.PushClickedEventData"/>.
+            </summary>
+            <param name="pushClickedData">Kinoa push notification clicked data.</param>
+            <param name="fromClosedApp">Indicates if push clicked when app is closed.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaInAppData">
+            <summary>
+                InApp message data attached to Push
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaInAppData.InAppHash">
+            <summary>
+                The secret hash.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaInAppData.InAppId">
+            <summary>
+                The In-app message identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaInAppData.LaunchTs">
+            <summary>
+                The Push Notification launch timestamp.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaInAppData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaInAppData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData">
+            <summary>
+                Kinoa iOS badge counter data.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData.CounterValue">
+            <summary>
+                Badge counter value.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData.#ctor(System.Int32)">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData"/>.
+            </summary>
+            <param name="counterValue">Badge counter value.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaLocalNotificationData">
+            <summary>
+                Kinoa local notification data.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.Title">
+            <summary>
+                Local notification title.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.Body">
+            <summary>
+                Local notification body.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.ImagePath">
+            <summary>
+                Local notification image path to local file, accessible to the application.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.TimeIntervalTrigger">
+            <summary>
+                Local notification time interval trigger. Triggers notification after provided amount of time.
+                
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.TimeCalendarTrigger">
+            <summary>
+                Local notification time calendar trigger. Triggers notification at exact provided date time.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.Repeatable">
+            <summary>
+                Local notification repeatable. If false - one time notification. If true - repeats until canceled after <see cref="P:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.TimeIntervalTrigger"/>.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.SetTimeIntervalTriggerBase(System.TimeSpan,System.Boolean)">
+            <summary>
+                Sets time interval trigger.
+                Time interval must be 60 seconds or greater for repeating notifications.
+            </summary>
+            <param name="timeIntervalTrigger">Trigger interval timespan.</param>
+            <param name="repeatable">Trigger interval repeatable.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.SetTimeCalendarTriggerBase(System.DateTime)">
+            <summary>
+                Sets time calendar trigger.
+            </summary>
+            <param name="dateTime">Trigger date.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaLocalNotificationData.DownloadAndSave(System.String)">
+            <summary>
+                Downloads image and saves to local cache.
+            </summary>
+            <param name="imageUrl"></param>
+            <returns>File path.</returns>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData">
+            <summary>
+                Kinoa push click analytic data.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.PlayerId">
+            <summary>
+                Player identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.Platform">
+            <summary>
+                Device platform.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.CampaignId">
+            <summary>
+                Push notification campaign id.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.IterationNumber">
+            <summary>
+                Push notification iteration number.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData.#ctor(System.String,System.String)">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData"/>.
+            </summary>
+            <param name="campaignId">Push notification campaign id.</param>
+            <param name="iterationNumber">Push notification iteration number.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaPushesStatus">
+            <summary>
+                Kinoa pushes status.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushesStatus.Blocked">
+            <summary>
+                Represents status of kinoa pushes.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaPushesStatus.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaPushesStatus"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaPushInternalLink">
+            <summary>
+                Kinoa push notification internal link class.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.KinoaPushInternalLink.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.KinoaPushInternalLink"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushInternalLink.Type">
+            <summary>
+                Kinoa push notification internal link type.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushInternalLink.Value">
+            <summary>
+                Kinoa push notification internal link value.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData">
+            <summary>
+                Kinoa push notification clicked data class.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.NotificationIdentifier">
+            <summary>
+                Push notification ID.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.CampaignId">
+            <summary>
+                Push notification CampaignId.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.IterationNumber">
+            <summary>
+                Push notification iteration number.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.InAppCreationParams">
+            <summary>
+                The In-app message creation parameters by Push Notification.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.InternalLink">
+            <summary>
+                Kinoa push notification internal link.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData.ExtraData">
+            <summary>
+                Kinoa push notification extra data.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo">
+            <summary>
+                Kinoa push notification personalization information which used for push configuration on Kinoa Dashboard.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.Name">
+            <summary>
+                Name.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.City">
+            <summary>
+                City.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.Country">
+            <summary>
+                Player name.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.Extra1">
+            <summary>
+                Player name.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.Extra2">
+            <summary>
+                Player name.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo.Extra3">
+            <summary>
+                Player name.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Data.TokenRegistrationData">
+            <summary>
+                Device token registration model.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.PlayerId">
+            <summary>
+                Player identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.DeviceId">
+            <summary>
+                Device identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.DeviceToken">
+            <summary>
+                Device FCM registration token.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.Platform">
+            <summary>
+                Device platform.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.Provider">
+            <summary>
+                Device token provider.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.TokenGeneratedTs">
+            <summary>
+                Registration token generation timestamp.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.LastLoginTs">
+            <summary>
+                Last token login timestamp.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.LanguageCode">
+            <summary>
+                ISO 639-1 two-letter language code the player's operating system is running in.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Data.TokenRegistrationData.SdkVersion">
+            <summary>
+                SDK version.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.TokenRegistrationData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.TokenRegistrationData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Data.TokenRegistrationData.#ctor(Kinoa.PushNotifications.Data.Enum.PushNotificationProvider,System.String,System.Int64,System.Int64)">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Data.TokenRegistrationData"/>.
+            </summary>
+            <param name="provider">Token provider.</param>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Interfaces.IPushNotificationService`1">
+            <summary>
+                Push notification service interface.
+            </summary>
+            <typeparam name="TNotification">Type of incoming notifications.</typeparam>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Interfaces.IPushNotificationService`1.OnInitializationCompleted">
+            <summary>
+                On push notification service initialization completed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Interfaces.IPushNotificationService`1.OnInitializationFailed">
+            <summary>
+                On push notification service initialization failed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Interfaces.IPushNotificationService`1.OnRegistrationTokenUpdated">
+            <summary>
+                On device registration token updated.
+                Returns updated token for a current device.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Interfaces.IPushNotificationService`1.OnPushNotificationReceived">
+            <summary>
+                On push notification message received.
+                Return received push notification.
+            </summary>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Interfaces.ISDKPushClient">
+            <summary>
+                SDK Push Client interface.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Interfaces.ISDKPushClient.OnPushNotificationClicked">
+            <summary>
+                On push notification clicked.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Interfaces.ISDKPushClient.KinoaService">
+            <summary>
+                Kinoa push service.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Interfaces.ISDKPushClient.RaisePushClicked(Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData)">
+            <summary>
+                Raises push clicked event.
+            </summary>
+            <param name="data">Kinoa push notification clicked data.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions">
+            <summary>
+                Kinoa push notification message extensions for:
+                - Android notification.Data
+                - iOS notification.UserInfo
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions.GetExtraData(System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Gets extra data from notification message custom data.
+            </summary>
+            <param name="customData">Notification message custom data.</param>
+            <returns>Dictionary of extra data.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions.GetCustomParameter(System.Collections.Generic.IDictionary{System.String,System.String},System.String)">
+            <summary>
+                Gets custom parameter from notification message custom data.
+            </summary>
+            <param name="customData">Notification message custom data.</param>
+            <param name="key">Custom parameter key.</param>
+            <returns>Custom parameter.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions.GetInAppCreationParams(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+                Gets InApp creation parameters from notification message custom data.
+            </summary>
+            <param name="customData">Notification message custom data.</param>
+            <returns>InApp creation parameters.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions.GetInternalLinkData(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+                Gets InApp creation parameters from notification message custom data.
+            </summary>
+            <param name="customData">Notification message custom data.</param>
+            <returns>InApp creation parameters.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Extensions.NotificationMessageExtensions.IsNeededToDismiss(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+                Gets dismiss option from notification message custom data.
+            </summary>
+            <param name="customData">Notification message custom data.</param>
+            <returns>InApp creation parameters.</returns>
+        </member>
+        <member name="E:Kinoa.PushNotifications.Logic.SDKPushClient.OnPushNotificationClicked">
+            <summary>
+                On push notification clicked.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Logic.SDKPushClient.Instance">
+            <summary>
+                SDK instance property
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.Logic.SDKPushClient.KinoaService">
+            <summary>
+                Kinoa push service.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.SDKPushClient.RaisePushClicked(Kinoa.PushNotifications.Data.KinoaPushNotificationClickedData)">
+            <summary>
+                Raises push clicked event.
+            </summary>
+            <param name="data">Kinoa push notification clicked data.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.SDKPushClient.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.Logic.SDKPushClient"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.RequestTokenRegistration(Kinoa.PushNotifications.Data.Enum.PushNotificationProvider,System.String,System.Int64,System.Int64)">
+            <summary>
+                Requests device token registration on Kinoa.
+            </summary>
+            <param name="provider">Token provider.</param>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.RequestTokenRegistration(Kinoa.PushNotifications.Data.Enum.PushNotificationProvider,System.String,System.String,System.Int64)">
+            <summary>
+                Requests device token registration on Kinoa.
+            </summary>
+            <param name="provider">Token provider.</param>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.DeleteToken(System.String,System.String)">
+            <summary>
+                Deletes device token on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="token">Device token.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.UpdatePushClickAnalytic(System.String,System.String)">
+            <summary>
+                Updates push click analytic on Kinoa.
+            </summary>
+            <param name="campaignId">Push notification campaign id.</param>
+            <param name="iterationNumber">Push notification iteration number.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.BlockPushes">
+            <summary>
+                Request to block player pushes.
+            </summary>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.UnblockPushes">
+            <summary>
+                Request to unblock player pushes.
+            </summary>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.GetPushStatus">
+            <summary>
+                Request to unblock player pushes.
+            </summary>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.SetPushPersonalizationInfo(Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo)">
+            <summary>
+               Sets push notification personalization information.
+            </summary>
+            <param name="pushPersonalizationInfo">Personalization information.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.GetPushPersonalizationInfo">
+            <summary>
+               Gets push notification personalization information.
+            </summary>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.DeletePushPersonalizationInfo">
+            <summary>
+               Deletes push notification personalization information.
+            </summary>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.Services.KinoaService.UpdateBadgeCounter(System.Int32)">
+            <summary>
+                Updates iOS badge counter.
+            </summary>
+            <param name="badgeCounterValue">Actual iOS badge counter.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.TokenRegistration(Kinoa.PushNotifications.Data.TokenRegistrationData)">
+            <summary>
+               Registers device token on Kinoa.
+            </summary>
+            <param name="registrationData">Token registration data.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.DeleteToken(System.String,System.String)">
+            <summary>
+               Deletes device token on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="token">Device token.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.UpdatePushClickAnalytic(Kinoa.PushNotifications.Data.KinoaPushClickAnalyticData)">
+            <summary>
+               Updates push click analytic on Kinoa.
+            </summary>
+            <param name="pushClickAnalyticData">Kinoa push click analytic data.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.BlockPushes">
+            <summary>
+               Blocks pushes for player.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.UnblockPushes">
+            <summary>
+               Unblock pushes for player.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.GetPushStatus">
+            <summary>
+               Get pushes status for player.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.SetPushPersonalizationInfo(Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo)">
+            <summary>
+               Sets push notification personalization information.
+            </summary>
+            <param name="pushPersonalizationInfo">Personalization information.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.GetPushPersonalizationInfo">
+            <summary>
+               Gets push notification personalization information.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.DeletePushPersonalizationInfo">
+            <summary>
+               Deletes push notification personalization information.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.Logic.WebRequests.UpdateBadgeCounter(Kinoa.PushNotifications.Data.KinoaiOSBadgeCounterData)">
+            <summary>
+               Update badge counter on Kinoa for device id.
+            </summary>
+            <param name="badgeCounterData">Token registration data.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.SDK">
+            <summary>
+                Kinoa Push Notifications SDK.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.SDK.OnPushNotificationClicked">
+            <summary>
+                On push notification clicked.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.SDK.Version">
+            <summary>
+                Gets the SDK version number.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.BlockPushes">
+            <summary>
+                Request to block player pushes.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.UnblockPushes">
+            <summary>
+                Request to unblock player pushes.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.GetPushStatus">
+            <summary>
+                Request to unblock player pushes.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.DeleteToken(System.String)">
+            <summary>
+                Deletes device token on Kinoa.
+            </summary>
+            <param name="token">Device token.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.DeleteToken(System.String,System.String)">
+            <summary>
+                Deletes device token on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="token">Device token.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.SetPushPersonalizationInfo(Kinoa.PushNotifications.Data.KinoaPushPersonalizationInfo)">
+            <summary>
+               Sets push notification personalization information.
+            </summary>
+            <param name="pushPersonalizationInfo">Personalization information.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.GetPushPersonalizationInfo">
+            <summary>
+               Gets push notification personalization information.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.PushNotifications.SDK.DeletePushPersonalizationInfo">
+            <summary>
+               Deletes push notification personalization information.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,33 @@
+{
+  "name": "com.kinoa.sdk.push",
+  "version": "2.10.0",
+  "displayName": "Kinoa Push Notifications",
+  "description": "Kinoa Push Notifications providers: \n- Firebase Cloud Messaging\n- Apple Push Notifications",
+  "unity": "2022.3",
+  "changelogUrl": "https://bitbucket.org/kinoa-team/kinoa-cdn/src/master/kinoa-sdk-v.1.4.5/CHANGELOG.md",
+  "documentationUrl": "https://drive.google.com/file/d/10no1lT7n-3IG_IRFoeF8C-6-XYQ0sOtJ/view?usp=sharing",
+  "licensesUrl": "https://bitbucket.org/kinoa-team/kinoa-cdn/src/master/kinoa-sdk-v.1.4.5/LICENSE.md",
+  "dependencies": {
+    "com.kinoa.sdk.core": "2.13.0",
+    "com.unity.mobile.notifications": "2.0.2"
+  },
+  "keywords": [
+    "kinoa",
+    "sdk",
+    "pixode",
+    "analytic"
+  ],
+  "author": {
+    "name": "Kinoa",
+    "email": "m.kitela@kinoa.io",
+    "url": "https://kinoa.io"
+  },
+  "samples": [
+    {
+      "displayName": "Kinoa Push Notifications Providers",
+      "description": "Contains sample push notifications providers.",
+      "path": "Samples/Providers"
+    }
+  ],
+  "hideInEditor": false
+}
