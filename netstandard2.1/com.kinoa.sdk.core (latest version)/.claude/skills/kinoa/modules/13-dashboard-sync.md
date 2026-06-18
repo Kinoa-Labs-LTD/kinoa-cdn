@@ -1,0 +1,181 @@
+# Dashboard Sync (Phase 7)
+
+Mirrors the integration's Kinoa entities (game events, player fields) onto the Kinoa Dashboard via the externally-distributed **integration-skills** plugin. This module is the **producer-side** reference: how `kinoa-dashboard-manifest.json` is generated from the project's code, how the external sync skill is bootstrapped and invoked, and how its result lands back in `kinoa-integration-log.md`. The consumer-side spec (diff planning, apply semantics, dashboard API) lives in the plugin's `kinoa-sdk-dashboard-sync` skill — NOT here, by design: dashboard semantics evolve faster than SDK releases, so they ship via the plugin marketplace, not inside this skill.
+
+## Sample File(s)
+
+None — Phase 7 generates no game code. Its only write targets are `kinoa-dashboard-manifest.json` (project root), the `.claude/settings.json` marketplace block (consent-gated), and the `kinoa-integration-log.md` round entry.
+
+## Overview
+
+The split of responsibilities is strict:
+
+| Side | Knows about | Artifacts |
+|---|---|---|
+| This skill (ships in `com.kinoa.sdk.core`) | The game's code: which events/fields the integration defines and uses | Produces `kinoa-dashboard-manifest.json`; consumes `kinoa-dashboard-sync-result.json` |
+| `kinoa-dashboard` plugin (marketplace, always current) | The Dashboard admin API: statuses, publish/activate semantics, kind vocabularies, deleted-record handling | Consumes the manifest; produces the sync result |
+
+Events and player fields are the first mirrored surfaces. The manifest schema is designed to grow (feature settings, bundles, translations, …) behind `schema_version` — when adding a surface, bump `schema_version`, add a new top-level section, and rely on the consumer's `unknown_manifest_sections` reporting for older plugin versions.
+
+## Manifest generation (producer algorithm)
+
+Generate `kinoa-dashboard-manifest.json` **from code, in full, in exactly one place — at the start of every Phase 7 run** (`/kinoa dashboard-sync`). The manifest has a single writer and is always rebuilt; earlier phases never write it — a copy written at Phase 5/6 time would go stale the moment the developer edits code by hand. Never hand-edit it, never merge into a previous manifest, never reconstruct it from `kinoa-integration-log.md` prose — code is the only source of truth. Always a full `Write` of the whole file.
+
+> **HARD GATE — regenerate, do not consume (field-tested failure 2026-06-15).** A manifest file already on disk is from a PRIOR run; its `round`, `generated_at`, `head_sha`, counts, and param names are **evidence of nothing about now**. You MUST issue a fresh `Write kinoa-dashboard-manifest.json` from a code scan **this run, before the preflight**, even on a bootstrap-stop. If you only `Read` the existing manifest and present its numbers, that is a single-writer violation — and it has produced real harm: a stale manifest's `time` param drove a **phantom** system-param collision flag and a "rename `time`→…" next-action for a param the live code had already renamed to `time_of_day`. Reading the prior manifest is allowed for delta-attribution ONLY (§Phase 7 flow step 2), never as this run's inventory.
+>
+> **You cannot present a preflight without a code scan.** The counts come from the freshly-written manifest's array lengths (`len(events.custom)` etc.), never hand-counted and never read from an old file. If you have not this run read the §Sources code (e.g. `CustomPlayerState.cs`, the event-service files, the builder, `AnalyticsEventListener.cs`) and `Write` the manifest, your numbers are stale — stop and regenerate.
+>
+> **Self-check after the Write (mandatory, mirrors the Phase-6 verify gate):** re-read the just-written manifest and confirm BOTH `round == count("## Round " in kinoa-integration-log.md) + 1` AND `generated_at` equals THIS run's `phase-start` telemetry `createdAt` (a prior date = stale). Either mismatch is positive proof the regeneration did not happen — fix before any preflight, gate, or summary. The Phase 7 round entry's **`Files modified` MUST list `kinoa-dashboard-manifest.json`**; its absence is the tell that the rebuild was skipped.
+
+### Sources, per section
+
+| Manifest section | Derived from | Rule |
+|---|---|---|
+| `events.predefined_in_use` | `Send<X>Event*` methods in `KinoaSyncGameEventsService.cs` / `KinoaGameEventsService.cs` | Include an event only if ≥1 **call site exists outside the two event-service files** (controller or game code — `session_start` qualifies via `KinoaGameController`). Method presence alone is NOT "in use" — the sample ships every method. Map method → wire name via the **wire-name table below** (NOT by guessing from the method name — `SendProgressionEvent` ≠ `progression`). `transport`: which service hosts the called method (`sync` / `async` / `both`). |
+| `events.predefined_in_use[].custom_params` | `AddCustomParameter(s)` calls inside that event's builder/mirror methods | Param name byte-for-byte from the string literal; kind from the value expression's C# type (table below). **System-name collision flag:** a param named `device_id`, `time`, or `time_ms` collides with the dashboard's auto-attached system event params — verified live 2026-06-12: on create the server silently DROPS its system column in favour of the operator param (no error), and system params themselves are immutable (direct edit → unhandled 500). Keep the param in the manifest byte-for-byte (it's a measurement), but flag it in the Phase 7 preflight summary: *"param `<name>` collides with a system event param — the event will lose its standard system `<name>` column; rename the param in game code (e.g. `time` → `time_of_day`)"*. The sync planner emits the same warning on the checklist. **The flag is computed from THIS run's freshly-regenerated manifest, whose param names are re-resolved to the LIVE string-literal/constant value at the `source_ref` — read the actual `AddCustomParameter`/`ParamKey_*` value in code, do not trust a prior manifest's recorded name. If the live literal no longer collides (the developer already renamed it), there is NO collision — do NOT emit the flag and do NOT advise a rename (a stale manifest produced exactly this phantom flag + a rename-already-renamed instruction on 2026-06-15).** Any "rename X in game code" next-action must quote the literal currently present at the `source_ref`; if it already differs from the colliding name, suppress the action. **Exclude unreplaced sample-shipped placeholder params** (`TestCustomParameterKey` / any `Test*` literal pair shipped by the samples) — flag them in the Phase 7 preflight summary instead ("sample param still present — replace or remove before syncing"); syncing one registers a junk param on the Dashboard. **Reachability**: params count only when contributed by a method reachable from a call site — a param added solely inside an uncalled method of an otherwise in-use event does not count. **Constant keys inside pass-through dicts** at reachable call sites (e.g. a `ParamKey_*` const written into a `Dictionary` argument) ARE promoted to params with kind from the value expression; only genuinely runtime-generated keys stay in `unsupported_by_cli`. |
+| `events.custom` | `EventName_*` constants in `Constants/KinoaGameEventConstants.cs` + `new CustomEventData("...")` literals in the services | **Same call-site test as predefined events**: include only when ≥1 call site of the event's `Send*` wrapper exists outside the Kinoa service files — a declared constant or builder/wrapper with zero callers is NOT "in use" (e.g. `ad_click` shipped "available for future wiring"). Uncalled declarations land in `events.declined` with reason `"declared but no call site"`. **A default parameter value is NOT a declaration** (`OnCustomEvent(string name = "custom_event")` declares nothing — neither `custom` nor `declined`). **One wrapper selecting between N name literals at runtime**: each literal reachable from a call site counts as its own in-use event (e.g. a `fromPush` bool picking `hourly_bonus_collected` vs `…_from_push` — both in use from one call site). Names byte-for-byte. `constant` = the const identifier when one exists. `params` from the event's `AddCustomParameter`/`AddCustomParameters` chain — **a constant key written into a pass-through `Dictionary` argument IS a param** (kind from the value expression), even when that dict is built in game code (`WheelOfFortune`, `DailyBonusService`, `AnalyticsEventListener`) and handed to the builder whole; trace the dict-construction site, not just the builder's direct `AddCustomParameter` calls. Only genuinely runtime-generated keys (`r.Type`, `prize.Key`) stay in `unsupported_by_cli`. `source_ref` = the game-action call-site `file:line` when known. |
+| `events.declined` | Union of two sources, each entry carrying its own `reason` | (a) **Coverage-gate declines** from this session's Phase 6 — reason quoting the gate decision; never invent — omit entirely when the session has no gate context. (b) **Declared-but-uncalled custom events** — constants or builders/wrappers with zero call sites — reason `"declared but no call site"`. The same manifest may contain both kinds. |
+| `player_fields.predefined_in_use` | Writes to base `PlayerState` properties (`KinoaPlayerStateService.Instance.PlayerState.<Field> = …`, builder `Set*` calls) in the Kinoa base AND game code | Base-field inventory per `modules/02-player.md` (KinoaCore.xml probe). **When KinoaCore.xml is unavailable** (package not installed — scaffold/CI checkout), emit best-effort paths and rely on the consumer correction loop (planner warns "predefined player field not found" → correct against the live predefined-fields listing in the same session, once). Known live paths: `level`, `personal_info.country_code` (NOT `.country`), `personal_info.city`; under `player_identifiers` the registry exposes ONLY `native_id` — `facebook_id`/`google_id`/`apple_id` writes ship in state but are NOT registrable predefined fields: exclude them from `predefined_in_use` (don't generate permanent warnings for known non-registry paths). `path` = serialized field path. **Same reachability test as events**: writes that live only inside methods with zero call sites do not count. |
+| `player_fields.custom` | Public properties of `Data/CustomPlayerState.cs` | `path` = `[JsonPropertyName]` value when present, else SnakeCaseLower of the property name (`CustomString` → `custom_string`). `name` = the C# property identifier chain verbatim (`EpisodeNumber`, nested `Wallet.Gold`) — NOT the snake path; the Dashboard shows `name` as the human-facing label. **Exclude unreplaced sample placeholders** (`Foo`, `Bar`, `CustomDateProperty` as shipped) — flag them in the Phase 7 preflight summary instead ("sample fields still present; run `/kinoa player --merge` to replace before syncing"). |
+| `game_id` | `GameID` literal in `KinoaSdkInitService.cs` | `null` when it's the `"YOUR_GAME_ID"` placeholder. |
+| `sdk_version` fallback | when `package.json` of `com.kinoa.sdk.core` is absent (package not installed — scaffold checkout) | fall back to `Library/PackageCache/com.kinoa.sdk.core@*` probe, then to the most recent log-entry metadata (metadata reuse only — the inventory itself is still never sourced from the log); flag the fallback in the preflight summary. |
+| `sdk_version` / `head_sha` / `round` | `package.json` of `com.kinoa.sdk.core` / `git rev-parse --short HEAD` / integration-log round counter | Same probes as the log entry metadata. `round` = THIS run's entry number (`count("## Round " in the log) + 1`). When the shell is unavailable, recover `head_sha` by reading `.git/HEAD` → the ref file. `generated_at`: prefer a UTC clock; a local clock with unknown UTC offset is NOT a UTC source — prefer a server-anchored timestamp, and the order makes one available: the `Phase started: Phase 7 — dashboard sync` telemetry post fires before any phase WORK (reading the skill, project metadata, and the `GameID` literal the post itself needs naturally precede it — the hard requirement is post-before-manifest-`Write`), and its response's `createdAt` is the canonical `generated_at` source. The receiver echoes `createdAt` without a zone suffix and with sub-second precision; it IS UTC — truncate to whole seconds and append `Z` (`2026-06-12T18:06:00.895063318` → `2026-06-12T18:06:00Z`). If no post succeeded, fall back to date-only (`<date>T00:00:00Z`); never emit local time suffixed `Z`. Metadata corrections within the same run re-`Write` the whole file (the single-writer rule means one writer, not one write). |
+
+### C# type → manifest `kind` mapping
+
+Event params (`kind` ∈ CLI vocabulary `number, boolean, string, date, enumeration, string_array, number_array`):
+
+| C# type of the value expression | kind |
+|---|---|
+| `string` | `string` |
+| `int`, `long`, `float`, `double`, `decimal` (and nullables) | `number` |
+| `bool` | `boolean` |
+| `DateTime` | `date` |
+| `Guid` | `string` (opaque identifier — serializes to a string; usable for equality/text segments) |
+| `enum` | `enumeration`, `extra` = comma-joined member names |
+| `string[]`, `List<string>`, `IEnumerable<string>` | `string_array` |
+| numeric arrays/lists | `number_array` |
+| anything else (object, dictionary, custom class) | → `unsupported_by_cli` entry, never silently dropped |
+
+**`kind` is decided by the C# type via this CLOSED table, NOT by the serialized shape.** Several types serialize to a JSON string yet map to a non-`string` kind — `DateTime`→`date`, `Version`→`version`, `enum`→`enumeration`. Do NOT infer `string` from "it serializes to a string"; that would strip date/version/enum semantics. A type not in this table is `unsupported_by_cli` — never guess `string` for an unknown type. (`Guid` is in the table because it's a documented, deliberate mapping, not a serialization-shape guess.)
+
+Player fields (`kind` ∈ `number, boolean, string, date, long_string, enumeration, version`):
+
+- **Scalars** — same rules as the event-param table.
+- **Nested objects ARE supported.** A property whose type is a custom class recurses into that class's public properties; every scalar leaf becomes its own field with a **dot-separated path** — `Wallet.Gold` → `wallet.gold`, `Wallet.Limits.DailyCap` → `wallet.limits.daily_cap` (SnakeCaseLower per segment, `[JsonPropertyName]` honored per segment, depth unlimited). Non-scalar leaves inside a nested object follow the same rules (recurse again, or fall to `unsupported_by_cli`). Base `PlayerState` already demonstrates this — `personal_info.country`, `player_identifiers.facebook_id`.
+- **Collections (arrays, `List<>`, dictionaries) and unmapped scalars (`TimeSpan`, …)** → `unsupported_by_cli`, never silently dropped. (`Guid` is NOT here — it maps to `string`, see the type table above.) **"Unsupported" means NOT registrable as a Dashboard field — not "doesn't work":** the value still serializes and ships in player state (returned by `GetPlayerState`); there's simply no Dashboard field kind for it, so it can't be used in triggers or audience segments. A **`Dictionary`** serializes to a JSON object `{}` and ships like a nested object — but unlike a nested **class** (whose properties are known at compile time and recurse into registrable scalar leaves), its keys are runtime-determined, can't be statically enumerated, and there's no object/dict field kind anyway → stays unsupported. The `reason` string must say *"ships in state, not registrable (no Dashboard field kind)"* — never *"register manually on the dashboard"* (for these field types you can't).
+- **`long_string` / `version`** are NOT inferrable from C# types (both are `string` client-side). An **explicit in-code declaration counts as developer intent**: when the property's XML doc (or an adjacent comment) names the kind — e.g. *"register with the `version` kind"* — emit that kind **directly in the manifest's `kind` field**. Do NOT emit `kind: "string"` with a side-note (`_note`, comment, etc.) — the sync planner reads only `kind`, so a side-note ships the wrong registration. Without an in-code declaration, default to `string` and offer the upgrade at the Phase 7 confirmation.
+  - **The emitted string literal ALWAYS wins for `name` — XML-doc/comments are advisory for `kind`/intent only, NEVER for the name.** A doc comment that names a param (or a stale comment that disagrees with the code) is not the param name; read the `AddCustomParameter("…")` / `EventName_* = "…"` literal and emit that. A comment claiming `time` when the literal is `time_of_day` is noise — the literal is the measurement.
+
+### Predefined event wire names (method → Dashboard registry name)
+
+| Generated `Send*` method | Wire name |
+|---|---|
+| `SendSessionStartEvent*` | `session_start` |
+| `SendPaymentEvent` | `payment` |
+| `SendProgressionEvent` / `SendProgressionStartEvent` / `SendProgressionEndEvent` | **`progress`** (not "progression") |
+| `SendLevelUpEvent` | `level_up` |
+| `SendWatchAdEvent*` | `watch_ad` |
+| `SendInGamePurchaseEvent` / `SendBoosterPurchaseEvent` | `in_game_purchase` |
+| `SendTutorialEvent` | `tutorial` |
+| `SendCollectedResourceEvent` | `collected_resource` |
+| `SendSocialConnectEvent` / `SendSocialDisconnectEvent` / `SendSocialPostEvent` | `social_connect` / `social_disconnect` / `social_post` |
+| `SendInAppCloseEvent` / `SendInAppClickEvent` / `SendInAppImpressionEvent` | `in_app_close` / `in_app_click` / `in_app_impression` |
+| `SendResetPlayerStateEvent` | `reset_player_state` |
+
+(Registry also holds SDK-fired names with no generated wrapper: `install`, `player_update`, `*_milestones`/`reach_milestone` — never emit those from the producer.) A method not in this table → do NOT invent a wire name; emit your best candidate and rely on the consumer's correction loop: the sync planner warns *"predefined event not found on the dashboard"*, and the fix is **producer-side** — this same Phase 7 session corrects the manifest mapping against the live predefined listing and re-plans, exactly once. The consumer never "normalizes" names on its own (its byte-for-byte rule stands).
+
+**Names and paths are never recased, trimmed, or "normalized"** beyond the documented SnakeCaseLower property→path serialization. The taxonomy byte-for-byte rule from `modules/04-events-async.md` applies to the manifest verbatim. **The manifest is a measurement of code, not a style guide — ugly-but-accurate beats pretty-but-wrong.** Hand-editing a name in the manifest (e.g. to "normalize" casing because a reviewer asked) registers a dead entity that never receives events while real data keeps flowing to the name the binary emits — and the edit is silently reverted at the next regeneration anyway. Renames ship code-first: rename the constant, regenerate, re-sync. The only sanctioned manifest correction is the predefined-name registry fix above — toward runtime truth, never away from it.
+
+### Manifest skeleton (`schema_version: 1`)
+
+```json
+{
+  "schema_version": 1,
+  "generated_at": "<ISO 8601 UTC>",
+  "producer": "kinoa-skill",
+  "integration_type": "SDK",
+  "game_id": "<uuid | null>",
+  "sdk_version": "com.kinoa.sdk.core@X.Y.Z",
+  "head_sha": "<7-char sha>",
+  "round": <integration-log round number of this run>,
+  "events": {
+    "predefined_in_use": [{"name", "transport", "custom_params": [{"name","kind","extra"}], "source"}],
+    "custom": [{"name", "constant", "send_to_analytics": true, "params": [{"name","kind","extra","csharp_type","source_ref"}]}],
+    "declined": [{"name", "reason"}]
+  },
+  "player_fields": {
+    "predefined_in_use": [{"path", "source"}],
+    "custom": [{"property","name","path","kind","extra","default_value","csharp_type","source"}]
+  },
+  "unsupported_by_cli": [{"surface","name","kind","reason"}]
+}
+```
+
+`integration_type` is always `"SDK"` — this skill only serves SDK integrations. The consumer refuses anything else. `send_to_analytics` is constant `true` (the SDK has no client-side off-switch); emit `false` only on an explicit in-code declaration. **Emit ONLY schema fields** — no `_note`/`_comment` side-keys; anything a field can't express belongs in `unsupported_by_cli` or the preflight summary, where the consumer and developer actually see it. Optional fields with no value (`extra`, `default_value`, `source_ref`) may be omitted rather than emitted as null.
+
+## Plugin bootstrap (distribution)
+
+The sync logic is NOT bundled with this skill — it arrives via the Claude Code plugin marketplace and stays current with the Dashboard API:
+
+- Marketplace: `Kinoa-Labs-LTD/integration-skills` (marketplace name `kinoa`), plugin `kinoa-dashboard`. No pinned version — every commit is a new version; `autoUpdate` keeps clients current.
+- Project pre-wiring (what Phase 7 preflight offers to add to the game project's `.claude/settings.json`, with developer consent — show the diff). **Mechanics:** `Edit` when the file already exists, `Write` to create it when absent (`Edit` cannot create files); merge into existing JSON, never clobber other keys; re-read and confirm the file parses afterwards. If the consented write is denied by the harness, that is NOT an abort — fall back to the manual-install path below and continue the stop flow:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "kinoa": {
+      "source": { "source": "github", "repo": "Kinoa-Labs-LTD/integration-skills" },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": { "kinoa-dashboard@kinoa": true }
+}
+```
+
+- **`settings.json` does NOT install the plugin** — on the CLI, `enabledPlugins` is ignored for installation (it only force-enables an already-installed plugin; verified via Claude Code docs/issue #45323). The settings block makes the marketplace **discoverable** and keeps it **auto-updating**, and marks the plugin enabled for teammates — but the actual install is a separate, explicit step. So present ONE coherent path, never "create settings.json AND run two redundant commands":
+  - **Recommended — settings.json (with `"autoUpdate": true`) + one install.** Once the settings block is written (it already registers the marketplace via `extraKnownMarketplaces`), the only command needed is `claude plugin install kinoa-dashboard@kinoa` — **`claude plugin marketplace add` is redundant** (the marketplace is already known from settings). Why settings.json earns its place: `autoUpdate` keeps this API-tracking plugin fresh as the dashboard admin API evolves (the whole reason for marketplace distribution), and the block persists/ships to teammates. Never claim settings.json "installs cleanly" — it doesn't.
+  - **Alternative — pure CLI, no settings.json:** `claude plugin marketplace add Kinoa-Labs-LTD/integration-skills` then `claude plugin install kinoa-dashboard@kinoa`. Simpler for a one-off solo install, BUT a CLI-added marketplace defaults to auto-update **off** → the plugin goes stale against the evolving API. The sync skill's preflight detects this and offers a consent-gated `"autoUpdate": true` enable; or `/plugin` → Marketplaces → kinoa → Enable auto-update.
+- While the repo is private, marketplace access needs the developer's GitHub auth (`gh auth login` / `GITHUB_TOKEN`).
+- Version handshake: this skill guarantees only the manifest contract (`schema_version`). If the sync skill reports `unsupported_manifest_version` or `unknown_manifest_sections`, the plugin and SDK skill are skewed — `/plugin marketplace update kinoa` (newer plugin) or regenerate the manifest with a current SDK (newer manifest).
+
+## Phase 7 flow (producer side)
+
+1. **Manifest**: generate per the algorithm above — **this means a fresh `Write` from a code scan THIS run (the HARD GATE in §Manifest generation), not reading the existing file.** "Always rebuilt from code" is only true if you actually rebuild it — an existing manifest on disk is a prior run's stale output (the 2026-06-15 failure read a 3-day-old round-6 file and reported its numbers). Run the §Sources code reads, `Write` the whole manifest, then the self-check (round/`generated_at` fresh) before proceeding. Ensure the project `.gitignore` covers the three sync artifacts — confirm with an explicit `git ls-files` probe for manifest / sync-result / workspace, appending only the missing lines (don't silently assume coverage); the integration log stays the developer's choice.
+2. **Preflight summary**: counts per section + `unsupported_by_cli` + sample-placeholder warnings. If both `events` lists and `player_fields` lists are empty, say so and stop — nothing to sync. When comparing against a previous round's manifest, attribute every delta honestly: an inventory change at an unchanged `head_sha` is **skill-rule-driven** (e.g. a registry-exclusion rule added between rounds), not code drift — say which rule, so the developer doesn't go hunting for a code change that never happened. (The previous manifest is read for delta attribution ONLY — the inventory itself always comes from code; this does not conflict with the single-writer/never-reuse rule.)
+   - **Dropped builder args (visibility aid, not a manifest entry).** When an event builder method accepts **value args** (int/string/bool/enum) that are never written to `AddCustomParameter(s)` nor a `Set*` call — i.e. the game computes them but doesn't send them to Kinoa — list them in the preflight summary: *"`OnLevelAttempt` accepts `boosterUsed`, `gemsSourced`, `livesUsed` that reach the builder but aren't sent as event params — confirm intentional."* This is a **soft surface only**: do NOT add them to the manifest (they aren't emitted — byte-for-byte still wins), and do NOT flag identity/routing/callback args (`playerId`, `Action<>`, cancellation tokens, etc.). The point is to let the developer catch a param they *meant* to send and forgot, not to police every non-param argument.
+3. **Plugin availability**: if the `kinoa-dashboard:kinoa-sdk-dashboard-sync` skill is available in this session, invoke it with the manifest path. If not (bootstrap-stop): offer the settings pre-wiring (consent-gated Edit), then give the ONE coherent install path per the §install rule above — settings.json + `claude plugin install kinoa-dashboard@kinoa` (no redundant `marketplace add`; settings.json alone does NOT install) — and tell the developer to re-run `/kinoa dashboard-sync` after installing. Do NOT attempt the dashboard sync yourself — no curl against `dashboard.kinoa.io`, no bearer-token handling, no re-implementation of the diff. The admin API is exclusively the plugin's domain.
+4. **Hand-off**: the sync skill runs its own phases (preflight/init in SDK mode → fetch → plan → developer-approved checklist → apply → verify) and writes `kinoa-dashboard-sync-result.json` at the project root.
+5. **Result pickup**: read `kinoa-dashboard-sync-result.json`; render the closing summary (applied / skipped / failed / unsupported / already_ok counts + the applied table); append a `kinoa-integration-log.md` round with Mode `Phase 7 — dashboard sync` quoting that summary verbatim per the log rules. Round-entry `**Files modified:**` metadata: Phase 7 touches only gitignored artifacts, so `git diff --stat HEAD` shows unrelated dirt and none of this run's files — use the manual prose file list with the "manually counted" note.
+
+**Bootstrap-stop runs** (step 3 stopped before hand-off): the run **still regenerates the manifest** (the HARD GATE applies on bootstrap-stop too — a fresh code-derived `Write`, with the round/`generated_at` self-check) → its `Files modified` MUST list `kinoa-dashboard-manifest.json`, and it gets a log round with Mode `Phase 7 — dashboard sync`. Its closing summary contains: manifest counts per section (= the freshly-written file's array lengths), preflight flags computed from THAT manifest with names re-resolved to live literals (suppress phantom collisions — see §custom_params), the bootstrap outcome (settings pre-wiring applied / write denied → the single install command), and the explicit next action (*"install the `kinoa-dashboard` plugin (`claude plugin install kinoa-dashboard@kinoa`), then re-run `/kinoa dashboard-sync`"*). **Do NOT forecast the next sync's apply-delta** ("will create booster_lifecycle + 5 Wallet.* fields" etc.) — the plugin's planner decides that against a freshly-rebuilt manifest; at most say "the re-run rebuilds the manifest and the planner computes the delta." No sync-result sections — nothing synced. `kinoa-dashboard-sync-result.json` must NOT be fabricated.
+
+## Dashboard
+
+### Dashboard dependencies — instance types
+
+| Instance | Created by | Dashboard path |
+|---|---|---|
+| Predefined Event (publish) | sync skill (`publish`) | https://dashboard.kinoa.io/game-settings/events/predefined |
+| Custom Event (+params) | sync skill (`create` / `add-params`) | https://dashboard.kinoa.io/game-settings/events/user |
+| Predefined Player Field (activate) | sync skill (`activate`) | https://dashboard.kinoa.io/players |
+| Custom Player Field | sync skill (`create`) | https://dashboard.kinoa.io/players |
+| Integration type = SDK | sync skill preflight (kinoa-init `--integration-type SDK`, consent-gated) | https://dashboard.kinoa.io/game-settings/integration |
+| `unsupported_by_cli` items | event params: **developer, manually** (registrable once runtime keys are known) · player fields (array/`List`/dict/`Guid`/`TimeSpan`): **not registrable** — ship in state only | events: path quoted per item; fields: state-only, no registration path |
+
+### Notes
+
+- Deleted user events/fields on the Dashboard are **re-published/re-activated by the sync skill, never re-created** — that's enforced consumer-side; the producer just never filters manifest entries because "they were deleted on Dashboard".
+- Entities that exist on the Dashboard but not in the manifest belong to the operator — the sync never touches them (`dashboard_only` bucket, informational).
+
+## Common Mistakes
+
+- **Reading the existing manifest and presenting its numbers as the preflight (consuming, not regenerating)** — the single-writer HARD GATE: a fresh code-derived `Write` every run, before the preflight, even on bootstrap-stop. An on-disk manifest's `round`/`generated_at`/`head_sha`/counts/names are a PRIOR run's output. (Field-tested 2026-06-15: a 3-day-stale round-6 file was read and reported, yielding wrong counts and a phantom collision/rename.)
+- **Trusting a prior manifest's param name over the live literal** — emit the actual `AddCustomParameter("…")` / `EventName_* = "…"` value at the `source_ref`; a stale manifest name (or a disagreeing doc comment) is not the name. This is what produced the phantom `time`-collision flag + "rename `time`" advice when the live code already had `time_of_day`.
+- **Forecasting the consumer's apply-delta from the producer** — never say "the re-run will create X + Y fields"; the plugin's planner decides against a freshly-rebuilt manifest. The producer states inventory, not predicted sync outcomes.
+- **Reconstructing the inventory from `kinoa-integration-log.md`** — the log is prose, per-run-filtered, and explicitly write-only. The manifest is always regenerated from code.
+- **Treating `Send<X>Event` method presence as "event in use"** — the sample ships all methods; only call sites outside the event services count.
+- **Recasing param keys or property names** when emitting the manifest (e.g., PascalCase → snake_case on event params). Only the documented property→path serialization applies, and only to player-field paths.
+- **Syncing the dashboard from this skill directly** (curl + bearer) when the plugin is missing — the correct move is bootstrap-then-stop.
+- **Shipping sample placeholder fields** (`Foo`, `Bar`, `CustomDateProperty`) into the manifest — exclude and warn.
+- **Editing the manifest to "fix" an unsupported kind** — unsupported entries must stay in `unsupported_by_cli` and reach the developer; deleting them hides a real registration gap.
