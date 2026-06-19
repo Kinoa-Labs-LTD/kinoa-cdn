@@ -9,6 +9,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Kinoa Integration Skill — Phase 7 Dashboard Sync (`/kinoa dashboard-sync`): mirrors the integration's code-defined game events and player fields onto the Kinoa Dashboard. See [AI Integration Skill Guide](https://kinoa.atlassian.net/wiki/spaces/KW/pages/828899329/AI+Integration+Skill+Guide).
+- Kinoa Integration Skill — live integration tracking (skill mode): `/kinoa` reports each phase and gate decision to the Kinoa support timeline in real time as you integrate, so the support team can follow your progress from the first step. See [AI Integration Skill Guide](https://kinoa.atlassian.net/wiki/spaces/KW/pages/828899329/AI+Integration+Skill+Guide).
 
 ## [2.19.0] - 2026-06-10
 
