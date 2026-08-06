@@ -1,0 +1,275 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>KinoaPushNotifications.iOS</name>
+    </assembly>
+    <members>
+        <member name="T:Kinoa.PushNotifications.iOS.ApplePushNotifications">
+            <summary>
+                Apple Push Notification service.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.ApplePushNotifications.AutoInitEnabled">
+            <summary>
+                Is auto initialization enabled.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.ApplePushNotifications.OnInitializationCompleted">
+            <summary>
+                On Apple Push Notification service initialization completed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.ApplePushNotifications.OnInitializationFailed">
+            <summary>
+                On Apple Push Notification service initialization failed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.ApplePushNotifications.OnRegistrationTokenUpdated">
+            <summary>
+                On Apple Push Notification service device registration token updated.
+                Returns APNs token for a current device.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.ApplePushNotifications.OnPushNotificationReceived">
+            <summary>
+                On whenever a remote notification is received, regardless if it's shown in the foreground.
+                <see cref="E:Unity.Notifications.iOS.iOSNotificationCenter.OnNotificationReceived"/>.
+                Return received iOSNotification.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.ApplePushNotifications.Initialize(Unity.Notifications.iOS.AuthorizationOption)">
+            <summary>
+                Initializes Apple Push Notification service.
+                Prevent APN auto initialization <see cref="P:Unity.Notifications.NotificationSettings.iOSSettings.RequestAuthorizationOnAppLaunch"/>
+                <seealso cref="P:Unity.Notifications.NotificationSettings.iOSSettings.NotificationRequestAuthorizationForRemoteNotificationsOnAppLaunch"/>
+                and use the <see cref="M:Kinoa.PushNotifications.iOS.ApplePushNotifications.Initialize(Unity.Notifications.iOS.AuthorizationOption)"/> method to process device registration token by Kinoa.
+            </summary>
+            <param name="authorizationOption">The authorization options your app is requesting.
+                You may specify multiple options to request authorization for.
+                Request only the authorization options that you plan to use.
+            </param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.ApplePushNotifications.RequestTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers APNs device token in Kinoa.
+                Use on device registration token update, when custom in-game APNs implementation already exists
+                but Kinoa push notifications services are needed.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.ApplePushNotifications.RequestTokenAsync(Unity.Notifications.iOS.AuthorizationOption)">
+            <summary>
+                Requests push notifications permissions and APNs registration token for the current device.
+                You can send the same request again to update the current authorization status.
+            </summary>
+            <param name="authorizationOption">The authorization options your app is requesting.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient">
+            <summary>
+                Apple push notification sample client.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient.AuthorizationOptions">
+            <summary>
+                The authorization options your app is requesting.
+                You may specify multiple options to request authorization for.
+                Request only the authorization options that you plan to use.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient.#ctor">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient.Initialize">
+            <summary>
+                Initialize the new instance of ApplePushNotificationClient.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient.SetupEventHandlers">
+            <summary>
+                Setups push notifications service game event handlers.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Clients.ApplePushNotificationClient.RequestTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers device token in Kinoa.
+                Use on device registration token update, when custom in-game APNs implementation already exists
+                but Kinoa push notifications services are needed.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient">
+            <summary>
+                IOS push notifications client.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient.ApnService">
+            <summary>
+                ApnService instance.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient.Instance">
+            <summary>
+                Singleton PushClient instance.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient.#ctor">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient.OnActivePlayerChanged(System.String)">
+            <summary>
+                On Active Player Changed handler.
+            </summary>
+            <param name="previousPlayerId">Previous Player ID.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.IOSPushNotificationsClient.RequestApnTokenRegistration(System.String,System.Int64,System.Int64)">
+            <summary>
+                Registers APN device token on Kinoa.
+            </summary>
+            <param name="token">Device token.</param>
+            <param name="tokenRegistrationTime">Token registration timestamp in milliseconds.</param>
+            <param name="lastLoginTs">Player last login timestamp.</param>
+        </member>
+        <member name="T:Kinoa.PushNotifications.iOS.Logic.Services.ApnService">
+            <summary>
+                Apple push notification service.
+            </summary>
+        </member>
+        <member name="F:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.isInitialized">
+            <summary>
+                Is service initialized.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.DeviceToken">
+            <summary>
+                A globally unique token that identifies this device to Apple Push Notification Network.
+                Never cached between the game sessions, received on <see cref="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RequestAuthorization(Unity.Notifications.iOS.AuthorizationOption)"/> invoke.
+            </summary>
+        </member>
+        <member name="P:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RegistrationTime">
+            <summary>
+                Device token registration time in milliseconds.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnInitializationFailed">
+            <summary>
+                On Apple push notification provider initialization failed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnInitializationCompleted">
+            <summary>
+                On Apple push notification provider initialization successfully completed.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnRegistrationTokenUpdated">
+            <summary>
+                On device registration token updated.
+                Returns updated token for a current device.
+            </summary>
+        </member>
+        <member name="E:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnPushNotificationReceived">
+            <summary>
+                On whenever a remote notification is received, regardless if it's shown in the foreground.
+                <see cref="E:Unity.Notifications.iOS.iOSNotificationCenter.OnNotificationReceived"/>.
+                Return received iOSNotification.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.PushNotifications.iOS.Logic.Services.ApnService"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.Initialize(Unity.Notifications.iOS.AuthorizationOption)">
+            <summary>
+                Initializes Apple push notifications.
+            </summary>
+            <param name="authorizationOption">The authorization options your app is requesting.
+                You may specify multiple options to request authorization for.
+                Request only the authorization options that you plan to use.
+            </param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RequestTokenDeletion(System.String,System.String)">
+            <summary>
+                Delete APN token on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="reason">Deletion reason.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RequestTokenRegistration(System.String)">
+            <summary>
+                Request APN token registration on Kinoa.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RequestTokenAsync(Unity.Notifications.iOS.AuthorizationOption)">
+            <summary>
+                Requests push notifications permissions and APNs registration token for the current device.
+                You can send the same request again to check the current authorization status.
+            </summary>
+            <param name="authorizationOption">The authorization options your app is requesting.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.RequestAuthorization(Unity.Notifications.iOS.AuthorizationOption)">
+            <summary>
+                Request permissions from the system to send local notifications and receive remote notifications.
+                Creates the APNs authorization request with registerForRemoteNotifications set to true.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.SetupEventHandlers">
+            <summary>
+                Setups message event handlers.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnNotificationReceived(Unity.Notifications.iOS.iOSNotification)">
+            <summary>
+                On whenever a local or a remote notification is received, regardless if it's shown in the foreground.
+                <see cref="E:Unity.Notifications.iOS.iOSNotificationCenter.OnNotificationReceived"/>.
+                <seealso href="https://docs.unity3d.com/Packages/com.unity.mobile.notifications@2.0/manual/iOS.html"/>.
+            </summary>
+            <param name="notification">iOS notification message.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.InitializationCompleted">
+            <summary>
+                Invokes on Apple push notification provider initialization successfully completed.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.CheckLastNotification(System.Boolean)">
+            <summary>
+                Checks last responded notification.
+            </summary>
+            <param name="fromClosedApp">Indicates if push clicked when app is closed.</param>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnApplicationResumed">
+            <summary>
+                OnApplicationResumed handler.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.OnDestroy">
+            <summary>
+                Ends messaging session when the program exits.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Services.ApnService.LogAuthorizationCompletion(Unity.Notifications.iOS.AuthorizationRequest)">
+            <summary>
+                Logs authorization completion.
+            </summary>
+            <param name="req">Processed request.</param>
+            <returns>True - id authorization completed successfully, else - False.</returns>
+        </member>
+        <member name="T:Kinoa.PushNotifications.iOS.Logic.Utils.KinoaiOSNotificationCenter">
+            <summary>
+                Kinoa iOS notification center.
+            </summary>
+        </member>
+        <member name="M:Kinoa.PushNotifications.iOS.Logic.Utils.KinoaiOSNotificationCenter.ProcessNotificationsOnInitialization">
+            <summary>
+                Dismisses delivered notification from device.
+            </summary>
+        </member>
+    </members>
+</doc>
