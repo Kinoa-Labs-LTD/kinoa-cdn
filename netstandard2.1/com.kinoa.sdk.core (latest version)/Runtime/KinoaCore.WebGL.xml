@@ -2519,6 +2519,25 @@
                 Is the current platform WSAP.
             </summary>
         </member>
+        <member name="M:Kinoa.Core.Utils.PlatformHelper.GetRuntimePlatform">
+            <summary>
+                Gets the current runtime platform.
+                <remarks>
+                The Unity engine API is only callable from within the Unity runtime: outside of it
+                (for example, in the KinoaCore.UnitTests host) it throws, which would fault the static
+                initialization of the whole helper. Falls back to the default platform in that case.
+                </remarks>
+            </summary>
+        </member>
+        <member name="M:Kinoa.Core.Utils.PlatformHelper.GetOsVersion">
+            <summary>
+                Gets the current operating system version.
+                <remarks>
+                Falls back to <see cref="F:Kinoa.Data.Enum.OS.Unknown"/> outside of the Unity runtime,
+                see <see cref="M:Kinoa.Core.Utils.PlatformHelper.GetRuntimePlatform"/>.
+                </remarks>
+            </summary>
+        </member>
         <member name="M:Kinoa.Core.Utils.PlatformHelper.GetOs">
             <summary>
                 Gets operating system name.
@@ -8310,6 +8329,14 @@
         <member name="P:Kinoa.Data.Messaging.InApp.Features.Milestones.InAppMilestonesCollectResult.NotCollected">
             <summary>
                 The list of milestones that were not collected successfully.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.Features.Milestones.InAppMilestonesCollectResult.InApp">
+            <summary>
+                The updated In-app message instance returned when collecting the final milestone claims one
+                eligibility <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.Capping"/>: the same instance is reset, a new one is not sent.
+                Is <c>null</c> when the claim does not engage: the collected milestone is not the final one,
+                or the In-app message has no eligibility capping configured.
             </summary>
         </member>
         <member name="T:Kinoa.Data.Messaging.InApp.Features.Milestones.InAppMilestonesFeature">

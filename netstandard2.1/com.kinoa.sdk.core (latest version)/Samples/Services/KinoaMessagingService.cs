@@ -109,7 +109,7 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         ProcessReminderInApps(inboxMessages);
         ProcessProgressionScoreInApps(inboxMessages);
         ProcessMilestonesProgressInApps(inboxMessages);
-		ProcessMissionsProgressInApps(inboxMessages);
+        ProcessMissionsProgressInApps(inboxMessages);
         ProcessInstanceUpdateInApps(inboxMessages);
     }
 
@@ -206,8 +206,8 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
                 "WebSocket", nameof(InAppMilestonesProgressChangedCommand), addToDisplayQueue: false);
         }
     }
-	
-	/// <summary>
+
+    /// <summary>
     ///     Processes the missions progress Inbox In-app messages received via WebSocket.
     /// </summary>
     /// <param name="messages">The In-app messages.</param>
@@ -219,8 +219,9 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
 
         if (missionsProgressInApps.Any())
         {
+            //TODO: Replace with your game's UI logic.
             KinoaUiService.Instance.ReplaceGameInApps(missionsProgressInApps,
-                "WebSocket", nameof(InAppMilestonesProgressChangedCommand), addToDisplayQueue: false);
+                "WebSocket", nameof(InAppMissionsProgressChangedCommand), addToDisplayQueue: false);
         }
     }
 
@@ -629,8 +630,8 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         await Task.WhenAll(inAppMessages.Select(m => CollectAllMilestonesAsync(m, cancellationToken)));
         Debug.Log($"Completed collecting all milestones from {inAppMessages.Count} In-app messages.");
     }
-	
-	/// <summary>
+
+    /// <summary>
     ///     Validates milestone indexes against the available milestones.
     /// </summary>
     private static List<uint> ValidateMilestoneIndexes(
@@ -681,6 +682,20 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
             {
                 Log($"{operationName} for '{message.Name}' '{message.Uuid}': " +
                     $"Not collected [{string.Join(", ", response.Data.NotCollected)}]");
+            }
+
+            // Returned when collecting the final milestone claims one eligibility server-side:
+            // the same instance is reset, so the local copy is stale and has to be replaced.
+            if (response.Data.InApp != null)
+            {
+                var eligibility = response.Data.InApp.Capping?.EligibilityLimit;
+                Log($"{operationName} for '{message.Name}' '{message.Uuid}': the final milestone claimed, " +
+                    "the In-app instance has been reset. Remaining eligibility: " +
+                    $"{eligibility?.Actual.ToString() ?? "none"} of {eligibility?.Original.ToString() ?? "none"}.");
+
+                //TODO: Replace with your game's UI logic.
+                KinoaUiService.Instance.ReplaceGameInApps(new[] { response.Data.InApp },
+                    nameof(response), operationName, addToDisplayQueue: false);
             }
         }
         else
@@ -735,8 +750,8 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
     }
 
     #endregion
-	
-	#region Missions
+
+    #region Missions
 
     /// <summary>
     ///     Collects missions progress for inbox In-app message.
@@ -771,11 +786,20 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         CancellationToken cancellationToken = default)
     {
         var logBuilder = new StringBuilder();
-        var response = await Kinoa.Messaging.ReachMissionsProgress(inAppMessage,  setNumber, rowNumbers, cancellationToken);
+        var response = await Kinoa.Messaging.ReachMissionsProgress(inAppMessage, setNumber, rowNumbers, cancellationToken);
 
         if (response.IsSuccessful() && response.Data != null)
         {
             logBuilder.Append($"{nameof(ReachMissionProgressOfInAppAsync)} for In-app message '{inAppMessage.Name}' '{inAppMessage.Uuid}':");
+            Debug.Log(logBuilder.ToString());
+
+            //TODO: Replace with your game's UI logic.
+            // Reach is the only missions endpoint that returns the refreshed In-app —
+            // no WebSocket push follows, so route it into the UI here.
+            KinoaUiService.Instance.ReplaceGameInApps(new List<InAppMessage> { response.Data },
+                nameof(ReachMissionProgressOfInAppAsync), nameof(InAppMissionsProgressChangedCommand),
+                addToDisplayQueue: false);
+
             return response.Data;
         }
         
@@ -898,6 +922,7 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
                     $"(DisplayOnProgressChange: {cmd.DisplayOnProgressChange})",
                 InAppMilestonesProgressChangedCommand cmd => $"{nameof(InAppMilestonesProgressChangedCommand)} " +
                     $"(DisplayOnProgressChange: {cmd.DisplayOnProgressChange})",
+                InAppMissionsProgressChangedCommand => nameof(InAppMissionsProgressChangedCommand),
                 InAppInstanceUpdateCommand => nameof(InAppInstanceUpdateCommand),
                 _ => $"Unknown ({inApp.Command.GetType().Name})"
             });
@@ -1080,6 +1105,7 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         LogTexts(sb, custom.Texts);
         LogCustomElements(sb, custom.Customs);
         LogMilestonesFeature(sb, custom.Feature as InAppMilestonesFeature);
+        LogMissionsFeature(sb, custom.Feature as InAppMissionsFeature);
     }
 
     private static void LogImage(StringBuilder sb, string prefix, InAppImage image)
@@ -1141,6 +1167,75 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
             var step = milestones.Steps[i];
             sb.AppendLine($"\t\tStep[{i}]: Score={step.Score}, Status={step.Status}");
             LogCustomFields(sb, "\t\t\tCustomFields", step.CustomFields);
+        }
+    }
+
+    /// <summary>
+    ///     Logs the missions feature of a Custom template In-app: the active and previous
+    ///     mission sets, every mission row, and the milestones progress bar.
+    /// </summary>
+    private static void LogMissionsFeature(StringBuilder sb, InAppMissionsFeature missions)
+    {
+        var state = missions?.MissionState;
+        if (state == null) return;
+
+        sb.AppendLine($"\tMissions: CurrentSetNumber={state.CurrentSetNumber}");
+        LogMissionSet(sb, "ActiveSetProgress", state.ActiveSetProgress);
+        LogMissionSet(sb, "PreviousSetProgress", state.PreviousSetProgress);
+        LogMissionsProgressBar(sb, state.ProgressBarState);
+    }
+
+    /// <summary>
+    ///     Logs a single mission set: its window, status, rows, and finished common rows.
+    /// </summary>
+    private static void LogMissionSet(StringBuilder sb, string label, InAppMissionSetProgress set)
+    {
+        if (set == null) return;
+
+        sb.AppendLine($"\t\t{label}: SetNumber={set.SetNumber}, Status={set.Status}, " +
+            $"Start={set.StartTimestamp}, End={set.EndTimestamp}");
+        sb.AppendLine($"\t\t\tFinishedCommonSubmissionsRows: " +
+            $"[{string.Join(", ", set.FinishedCommonSubmissionsRows)}]");
+        LogCustomFields(sb, "\t\t\tCustomFields", set.CustomFields);
+
+        foreach (var mission in set.ActiveMissions)
+        {
+            sb.AppendLine($"\t\t\tMission[Row={mission.RowNumber}]: " +
+                $"Placement={mission.PlacementNumber}, Sub={mission.SubMissionNumber}, " +
+                $"Text={mission.MissionText}, Score={mission.CurrentScore}/{mission.GoalScore}, " +
+                $"BarScore={mission.ProgressBarScore}, Status={mission.Status}, " +
+                $"Google={mission.GooglePackageId}, Apple={mission.ApplePackageId}");
+            LogClickConfig(sb, "\t\t\t\tProgressionCta", mission.ProgressionCta);
+            LogClickConfig(sb, "\t\t\t\tCompletionCta", mission.CompletionCta);
+            LogResources(sb, "\t\t\t\tProcessedResources", mission.ProcessedResources);
+            LogCustomFields(sb, "\t\t\t\tCustomFields", mission.CustomFields);
+        }
+    }
+
+    /// <summary>
+    ///     Logs the missions milestones progress bar and its steps.
+    /// </summary>
+    private static void LogMissionsProgressBar(StringBuilder sb, InAppMissionsMilestonesProgressBar bar)
+    {
+        if (bar == null) return;
+
+        sb.AppendLine($"\t\tProgressBarState: TotalScore={bar.TotalScore}");
+        LogCustomFields(sb, "\t\t\tCustomFields", bar.CustomFields);
+
+        if (bar.Milestones == null) return;
+        foreach (var step in bar.Milestones)
+        {
+            sb.AppendLine($"\t\t\tMilestone[Row={step.RowNumber}]: " +
+                $"Number={step.MilestoneNumber}, Score={step.Score}, Status={step.Status}");
+            if (step.Button != null)
+            {
+                sb.AppendLine($"\t\t\t\tButton: Label={step.Button.Label}");
+                LogImage(sb, "\t\t\t\t\tBackgroundImage", step.Button.BackgroundImage);
+                LogClickConfig(sb, "\t\t\t\t\tClickConfig", step.Button.ClickConfig);
+                LogResources(sb, "\t\t\t\t\tResources", step.Button.Resources);
+                LogPackages(sb, "\t\t\t\t\tPackages", step.Button.Packages);
+                LogCustomFields(sb, "\t\t\t\t\tCustomFields", step.Button.CustomFields);
+            }
         }
     }
 

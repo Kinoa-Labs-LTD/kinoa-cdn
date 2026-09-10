@@ -7,13 +7,12 @@ namespace Core.Services
     /// </summary>
     public class KinoaTimeService : KinoaSingleton<KinoaTimeService>
     {
-		
         public KinoaTimeService()
         {
             Kinoa.Time.OnKinoaServiceTimeUpdated += OnKinoaServiceTimeUpdated;
         }
 
-		/// <summary>
+        /// <summary>
         ///     Handler for service time update.
         /// </summary>
         private void OnKinoaServiceTimeUpdated()
@@ -21,7 +20,7 @@ namespace Core.Services
             var kinoaTime = Kinoa.Time.GetKinoaUnixTime(true);
             Debug.Log($"[GAME] OnKinoaServiceTimeUpdated: {kinoaTime.UnixTime} | IsServiceTime = {kinoaTime.IsServiceTime}");
         }
-		
+
         /// <summary>
         ///     Checks if service time is available.
         /// </summary>

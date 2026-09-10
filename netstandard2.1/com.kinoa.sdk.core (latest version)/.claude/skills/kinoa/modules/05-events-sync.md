@@ -97,7 +97,7 @@ Event data construction is identical to async events — same constructors, same
 
 ## Configuration Notes (what's NOT in the sample)
 - **SyncGameEventResponse:** Contains `InboxMessages` (full player inbox — stored on server, persists across app restarts, returned with every sync event response), `OptionalMessages` (non-inbox in-apps — displayed once and disappear), and `InboxDetails` (categorization of inbox changes).
-- **InAppInboxDetails categories:** `NewInApps`, `OldInApps`, `ReplacedInApps`, `RemovedInApps`, `ReminderInApps`, `ProgressionScoreInApps`, `MilestonesProgressInApps`, `UpdatedInApps` — all are `List<string>` of UUIDs (match `InAppMessage.Uuid`).
+- **InAppInboxDetails categories:** `NewInApps`, `OldInApps`, `ReplacedInApps`, `RemovedInApps`, `ReminderInApps`, `ProgressionScoreInApps`, `MilestonesProgressInApps`, `MissionProgressionInApps`, `UpdatedInApps` — all are `List<string>` of UUIDs (match `InAppMessage.Uuid`). `MissionProgressionInApps` carries the in-apps whose missions state advanced on this event (see [`modules/15-missions.md`](15-missions.md)).
 - **Race condition:** If sync and async events are triggered in parallel for the same event, local PlayerState may temporarily differ from server state. The server state will be synchronized during the next event. Prefer using one approach consistently per event type.
 
 ## Common Mistakes

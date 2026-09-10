@@ -220,12 +220,13 @@ Present available modules and ask which ones the developer needs:
   - Async Events (`KinoaGameEventsService`) — fire-and-forget for other events
 
 **Optional modules (ask which ones):**
-- In-App Messaging (`KinoaMessagingService`) — WebSocket real-time messages
+- In-App Messaging (`KinoaMessagingService`) — WebSocket real-time messages. Covers every in-app type, including the **Milestones** and **Missions** template features — they ship inside this service, not as separate modules (missions detail: [`modules/15-missions.md`](modules/15-missions.md), reachable as `/kinoa missions`)
 - Feature Settings (`KinoaFeaturesSettingsService`) — remote feature configuration
 - Bundles (`KinoaBundlesService`) — bundle resources
 - Translations (`KinoaTranslationsService`) — localization
 - P2P Events (`KinoaP2PEventsService`) — player-to-player interactions
 - Currency Rates (`KinoaCurrencyRatesService`) — currency conversion rates
+- Kinoa Time (`KinoaTimeService`) — server-anchored clock with device-time fallback; the source in-app countdowns and deadline checks should read ([`modules/16-time.md`](modules/16-time.md))
 
 ### Phase 3 — Configuration
 
@@ -275,7 +276,7 @@ In the wizard, generate files **one at a time** (so the developer can confirm/re
   - Feature Settings DTOs (step 2) + `InAppFeatureConfiguration` subclasses (step 3) are used by `KinoaSdkInitService` (step 4, registration) and `KinoaMessagingService` (step 12).
   - `KinoaGameEventBuildingService` (step 10) is shared by both event services (steps 8, 9).
   - `KinoaUiService` (step 11) is used by sync events (step 8) and messaging (step 12).
-  - `KinoaGameController` (step 18) wires up every generated service.
+  - `KinoaGameController` (step 19) wires up every generated service.
 
   Developer selections (which modules to include), per-file renames (from "Integrate into existing class"), and credential substitutions from earlier steps must be **resolved first** — otherwise a later file's references point at classes that weren't created (or were created under a different name).
 - **`--auto` (parallel):** the **Generation order list** is narrative only — dispatch all files in parallel. Cross-file coupling is absent in this mode (full module set + canonical names; see §"Generation Strategy").
@@ -287,7 +288,7 @@ In the wizard, generate files **one at a time** (so the developer can confirm/re
 - `Constants/KinoaGameEventConstants.cs` — TODO-scaffolded `public static class` for centralized event-name + parameter-key constants on custom events and custom params on predefined events. Ships empty (no entries); extend via `--merge` per `modules/04-events-async.md` §"Event-name + parameter-key constants consolidation".
 - `Data/KinoaResources.cs` — TODO-scaffolded `public static class` for the game's resources catalogue (sellable/awardable items mirrored to Dashboard resource templates). Ships empty (zero consts); filled exclusively via the `/kinoa resources --merge` confirmation gate (plain `/kinoa resources` only ensures this stub exists) per [`modules/14-resources.md`](modules/14-resources.md) — never populated during generation.
 - `Utils/KinoaSingleton.cs` — base singleton for Kinoa services. **Required** — all `Kinoa*Service` classes inherit from it; without it, generated code does not compile.
-- `Utils/KinoaOverlay.cs` — `IDisposable` loading-overlay helper used by `KinoaGameController`. Required when step 18 is generated.
+- `Utils/KinoaOverlay.cs` — `IDisposable` loading-overlay helper used by `KinoaGameController`. Required when step 19 is generated.
 
 Use `cp` only on the `.cs` files — these are client-ready as shipped; rules 1-12 do not apply (no generics, no internal-only markers, no test credentials). Do not copy `.cs.meta` siblings (see §"Per-file workflow" step 1).
 
@@ -308,7 +309,8 @@ Use `cp` only on the `.cs` files — these are client-ready as shipped; rules 1-
 15. `KinoaTranslationsService.cs` if selected
 16. `KinoaP2PEventsService.cs` if selected
 17. `KinoaCurrencyRatesService.cs` if selected
-18. `KinoaGameController.cs` — main controller (SDK init, session lifecycle, startup flow)
+18. `KinoaTimeService.cs` if selected — no aggregator wiring (see §"`time` argument")
+19. `KinoaGameController.cs` — main controller (SDK init, session lifecycle, startup flow)
 
 ### Phase 5 — Summary & Next Steps
 
@@ -369,6 +371,7 @@ If the developer declines, exit immediately. If they accept, proceed.
   | Translations | [`modules/09-translations.md` §"Merge Surfaces"](modules/09-translations.md#merge-surfaces) |
   | P2P Events | [`modules/10-p2p-events.md` §"Merge Surfaces"](modules/10-p2p-events.md#merge-surfaces) |
   | Currency Rates | [`modules/11-currency-rates.md` §"Merge Surfaces"](modules/11-currency-rates.md#merge-surfaces) |
+  | Time | [`modules/16-time.md` §"Merge Surfaces"](modules/16-time.md#merge-surfaces) |
   | Controller | [`modules/12-controller.md` §"Merge Surfaces"](modules/12-controller.md#merge-surfaces) |
   
   Cross-cutting rules below apply across ALL modules. Module-specific Modify-gate options, frozen lists, and Dashboard prerequisites live in each module's `## Merge Surfaces` section. The high-level enumeration of carve-out surfaces below remains as a quick-reference index — but the authoritative per-module detail is in `modules/<x>.md`.
@@ -393,6 +396,7 @@ If the developer declines, exit immediately. If they accept, proceed.
   - `KinoaTranslationsService` — see [`modules/09-translations.md` §"Merge Surfaces"](modules/09-translations.md#merge-surfaces).
   - `KinoaP2PEventsService` — see [`modules/10-p2p-events.md` §"Merge Surfaces"](modules/10-p2p-events.md#merge-surfaces).
   - `KinoaCurrencyRatesService` — see [`modules/11-currency-rates.md` §"Merge Surfaces"](modules/11-currency-rates.md#merge-surfaces).
+  - `KinoaTimeService` — see [`modules/16-time.md` §"Merge Surfaces"](modules/16-time.md#merge-surfaces).
   
   **Controllers layer:**
   - `KinoaGameController` — see [`modules/12-controller.md` §"Merge Surfaces"](modules/12-controller.md#merge-surfaces).
@@ -902,6 +906,8 @@ For detailed API documentation, code patterns, and examples for each module, see
 - [12-controller.md](modules/12-controller.md) — Game Controller
 - [13-dashboard-sync.md](modules/13-dashboard-sync.md) — Dashboard Sync (Phase 7: manifest contract, plugin bootstrap, result pickup)
 - [14-resources.md](modules/14-resources.md) — Resources (items catalogue: discovery, confirmation gate, `KinoaResources.cs`, Dashboard resource templates)
+- [15-missions.md](modules/15-missions.md) — Missions In-apps (in-app feature on the custom template: four missions endpoints, mission/set/progress-bar state, progression semantics, CTA routing)
+- [16-time.md](modules/16-time.md) — Kinoa Time (service-time clock: offset sampling and rejection rules, `KinoaCurrentTime` provenance, `useServiceTime` opt-in, device-time fallback)
 
 ## Argument Handling
 
@@ -919,15 +925,82 @@ If invoked with a specific module argument (e.g., `/kinoa messaging`), skip Phas
 
 ### Valid module arguments
 
-`init`, `player`, `player-fields`, `session`, `events`, `async-events`, `sync-events`, `messaging`, `feature-settings`, `bundles`, `translations`, `p2p`, `currency-rates`, `controller`, `all`.
+`init`, `player`, `player-fields`, `session`, `events`, `async-events`, `sync-events`, `messaging`, `missions`, `feature-settings`, `bundles`, `translations`, `p2p`, `currency-rates`, `time`, `controller`, `all`.
 
 ### `player-fields` argument (pinned 2026-08-03)
 
 The fields-scoped slice of module 02 — player fields end-to-end WITHOUT the rest of the player module (no login/account wiring, no Pattern A/B ongoing-sync choice, no session/controller work). **`/kinoa player-fields --merge`**: (1) discovery of field candidates per module 02's field rules (game state/save models + the existing `CustomPlayerState`; existing rows measured THIS run); (2) the dashboard field registry live-fetch with the cross-game gate (payload spec above); (3) the merge-plan page with ONLY the `player_fields` section + the single wait-gate; (4) hand-back consumption per §hand-back (existing:false only, `predefined_field` route, description → XML-doc, enum carriers per module 02), standard per-edit gates; (5) fields-scoped self-checks (CS0102 guard, per-segment path rules) + closing summary + module-scoped log round (Mode `Phase 6 — --merge (scoped: player-fields)`); (6) the scoped Dashboard Sync gate → `/kinoa dashboard-sync player-fields`. `/kinoa player-fields` WITHOUT `--merge` = pointer only (custom fields are exclusively a `--merge` workflow — same discipline as the resources stub-ensure): print *"Field candidates are discovered via `/kinoa player-fields --merge` (or any full `--merge`)."* and stop — no discovery, no page, no Dashboard Sync gate. Refuse `player-fields --auto` and `player-fields --fresh`. The full `/kinoa player --merge` keeps covering this scope as one of its surfaces.
 
+### `missions` argument
+
+The missions-scoped slice of module 06 — missions in-apps end-to-end WITHOUT the rest of
+the messaging module. **Missions generates no files of its own:** it is an
+`InAppFeature` on the custom template, and all of its code ships inside
+`KinoaMessagingService.cs` (see [`modules/15-missions.md`](modules/15-missions.md)).
+
+**`/kinoa missions`** (without `--merge`) = **knowledge + presence check**:
+1. Read [`modules/15-missions.md`](modules/15-missions.md).
+2. Verify `KinoaMessagingService.cs` exists in the Kinoa target base and contains the
+   `#region Missions` block plus `ProcessMissionsProgressInApps`. If the messaging
+   module was never generated, say so and stop: *"Missions ships inside the Messaging
+   module. Run `/kinoa messaging` first, then re-invoke `/kinoa missions`."* If the file
+   exists but the missions region is absent (integration predates missions support),
+   offer to add the region from the current sample per §"Argument Handling"
+   aggregator-update flow — standard per-edit Apply gate.
+3. Answer / explain, then print the two customization pointers: the Dashboard-registered
+   missions `template_key` must be added to `KinoaInAppTemplateConstants`, and mission
+   CTAs need routing per [`modules/15-missions.md` §"CTA routing"](modules/15-missions.md#cta-routing).
+4. Surface the missions Dashboard prerequisites (missions in-app configuration,
+   missions custom template, progression event with its bound parameters, progress-bar
+   milestones) in the closing summary per §"Closing summary".
+
+**`/kinoa missions --merge`** — the missions surfaces of
+[`modules/15-missions.md` §"Merge Surfaces"](modules/15-missions.md#merge-surfaces)
+only: new `#region Missions` wrapper methods, `ProcessMissionsProgressInApps`
+body-extension, the missions `template_key` constant, and mission-CTA routing in the
+game's UI layer. Everything else in `KinoaMessagingService` / `KinoaUiService` stays
+frozen until `/kinoa messaging --merge` runs. Same pre-flight ordering as every other
+`--merge` composition (§"`--merge` flag") — plus the messaging-presence check above.
+
+Refuse `missions --auto` and `missions --fresh`: missions has no generation step of its
+own, so there is nothing for either flag to drive. A full `/kinoa messaging --merge`
+keeps covering the missions surfaces as part of its scope.
+
 ### `resources` argument
 
 `/kinoa resources` (WITHOUT `--merge`) is **module install only** — mirror of the player-fields discipline (custom fields are exclusively a `--merge` workflow): ensure `Data/KinoaResources.cs` exists (create the empty sample stub with its stable `.meta` GUID if missing — same as a wizard run ships it), confirm the module is wired, and print one pointer: *"Resource candidates are discovered via `/kinoa resources --merge` (or any full `--merge`)."* NO candidate discovery, NO confirmation page, NO catalogue write — a stub-ensure run touches no mirrorable entities, so it SKIPS the Dashboard Sync gate. **`/kinoa resources --merge` enters the discover → confirm → write flow of [`modules/14-resources.md`](modules/14-resources.md)**: scan the game code for sellable/awardable items, gate ALL candidates through the developer confirmation page (plugin-shipped HTML page; chat-table fallback), then rebuild `Data/KinoaResources.cs` from the confirmed list — and close with the scoped Dashboard Sync gate. A full wizard / `all` run ships the stub via samples; discovery stays out of `--auto` (the gate is interactive by design); refuse `resources --auto` and `resources --fresh`. The catalogue reaches the Dashboard via `/kinoa dashboard-sync resources` (the scoped sync the run's closing gate offers) or a full `/kinoa dashboard-sync` (manifest `resources[]`, `schema_version: 3`).
+
+### `time` argument
+
+`/kinoa time` is an **ordinary generation module** — unlike `missions` / `resources` /
+`player-fields`, it has a file of its own. Generate `Services/KinoaTimeService.cs` from the
+sample via `cp` per §"Generation Strategy" (the sample is client-ready — no transformation rule
+applies, no Dashboard-context literal to replace), then print the two customization pointers
+from [`modules/16-time.md`](modules/16-time.md) §"Integration Notes": the
+`TimeConfiguration(useServiceTime:)` flag in `KinoaSdkInitService` and the
+`OnKinoaServiceTimeUpdated()` handler body.
+
+**No aggregator update.** `KinoaTimeService` has no usage in the `KinoaGameController` sample,
+so the §"Argument Handling" aggregator-update flow does not apply — per its closing note,
+modules without aggregator-sample usages need no controller wiring; the service is invoked from
+game logic. Time's only init-time surface, `TimeConfiguration`, already ships inside
+`KinoaSdkInitService`, generated by the always-on Init module. Consequence for §"Code
+Transformation Rules" rule 12: an unselected Time module leaves **no**
+`// TODO: Uncomment when Time is added` marker anywhere — there is nothing to comment out, so a
+later `/kinoa time` finds no marker and simply generates the file.
+
+**`/kinoa time --merge`** — the surfaces of
+[`modules/16-time.md` §"Merge Surfaces"](modules/16-time.md#merge-surfaces): the `useServiceTime`
+flag value, the `OnKinoaServiceTimeUpdated()` handler body, and routing the game's existing
+server-clock concept through `IsServiceTimeAvailable()`. Load module 01's §"Merge Surfaces" too
+— the `useServiceTime` surface physically lives in `KinoaSdkInitService.cs` (module 16 declares
+this under §"Cross-module dependencies"). Standard `--merge` pre-flight: if
+`KinoaTimeService.cs` is absent from the Kinoa target base, refuse per §"`--merge` flag".
+
+`time` accepts `--auto` and `--fresh` like any other generation module.
+
+Time defines no mirrorable entity, so a `time`-scoped run **SKIPS the Dashboard Sync gate** (same
+as the `resources` stub-ensure run).
 
 ### `dashboard-sync` argument
 

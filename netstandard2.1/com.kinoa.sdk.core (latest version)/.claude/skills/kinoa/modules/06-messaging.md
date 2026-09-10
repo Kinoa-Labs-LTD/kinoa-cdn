@@ -122,6 +122,7 @@ Schema keys / `$type` discriminators / Register'd schema names follow the standa
 Load these modules into context when working on surfaces of this module:
 - [`modules/01-init.md` §"Merge Surfaces"](01-init.md#merge-surfaces) — `InAppXxxFeatureConfiguration` derived classes are registered in `KinoaSdkInitService.InAppFeatureConfiguration.Register<T>(schemaName)` BEFORE `SDK.Initialize()`. Adding new derived classes here pairs with a corresponding Register-line edit in 01-init.
 - [`modules/04-events-async.md` §"Merge Surfaces"](04-events-async.md#merge-surfaces) — async game events trigger In-apps that arrive via the Messaging WebSocket and are processed here. Understanding which events fire which in-app triggers (Dashboard config) requires awareness of the async event taxonomy defined in 04 — so when working on messaging in-app handling, the relevant async event builders must be loaded.
+- [`modules/15-missions.md`](15-missions.md) — the Missions template feature: its four endpoints, state model, progression semantics, and CTA routing. Load it when the game uses missions in-apps; the missions code lives in this module's `KinoaMessagingService` but its rules live there.
 
 See SKILL.md §"Phase 6 — `--merge` mode" for the frozen-scope philosophy (commenting out and adding alongside is permitted; in-place edits are not).
 
@@ -139,6 +140,7 @@ Dashboard prerequisites for this module. Closing-summary collection rules: SKILL
 | **In-app Configuration** | every game event sent via `Kinoa.GameEvents.Send*Event(...)` / `Kinoa.SyncGameEvents.Send*EventAsync(...)` that is intended to trigger an in-app; external-link / push-notification creation paths via `Kinoa.Messaging.CreateInAppMessageAsync(...)` | [Communications → In-Apps](https://dashboard.kinoa.io/communications/in-app) | In-apps are triggered by events (NOT requested by key) — every event meant to trigger an in-app must have a matching in-app configured here with: trigger event, capping / eligibility, template, content, scheduling, recurrence, audience filters, A/B distribution. |
 | **In-app Custom Template** | every `InAppCustomTemplateData.TemplateKey` literal accessed in `InAppMessage.Data` cast paths within `KinoaMessagingService` / `KinoaUiService` (sample-shipped processing) | [Game Settings → In-App Custom Templates](https://dashboard.kinoa.io/game-settings/in-apps) | Each `TemplateKey` referenced in the SDK must match a custom template registered here with its element structure (buttons, images, texts, custom fields, feature configuration slots, milestones shape). The `One CTA Template` is Kinoa-shipped and works out of the box for games already using custom templates. |
 | **In-app Feature Schema** | every `InAppFeatureConfiguration.Register<T>(schemaName, schemaVersion)` line in `KinoaSdkInitService` (governed by [`modules/01-init.md` §"Merge Surfaces"](01-init.md#merge-surfaces)); every derived `InAppXxxFeatureConfiguration : InAppFeatureConfiguration` class in `Data/` (e.g., `InAppDailyBonusFeatureConfiguration`) | [Game Settings → Feature Schemas](https://dashboard.kinoa.io/game-settings/new-feature-schemas) | The `schemaName` passed to `Register<T>` must match a Feature Schema entry registered here; the schema shape (property names, types) must match the derived class. Unregistered types deserialize as base `InAppFeatureConfiguration` with raw `ExtensionData` — no data is lost, but typed access via `GetFeatureConfigurations<T>()` returns nothing. **In-app Feature Schema key ≠ Feature Settings key** — the schema key is shared across multiple FS entries (see [`modules/07-feature-settings.md` §Dashboard](07-feature-settings.md#dashboard)). |
+| **In-app Missions Configuration** | the missions `template_key` constant + the `#region Missions` calls in `KinoaMessagingService`; the Dashboard-configured progression event | [Communications → In-Apps](https://dashboard.kinoa.io/communications/in-app) + [Game Settings → In-App Custom Templates](https://dashboard.kinoa.io/game-settings/in-apps) | Missions in-apps need a game-registered custom template carrying a missions feature slot, a missions configuration table (rows, goals, progress-bar scores, rewards, CTAs), and a registered progression event whose parameters the rows bind to. Authoritative row-by-row rules: [`modules/15-missions.md` §Dashboard](15-missions.md#dashboard). |
 
 ### Notes
 - Insecure messages (failed checksum / sequence validation) are silently dropped by the SDK — Dashboard configuration cannot bypass this. Per-message security defaults to enabled; can be tuned via `InAppSecurityConfiguration` at `Kinoa.Messaging.Initialize(...)`.
@@ -187,6 +189,30 @@ Templates are selected during In-app creation on the Dashboard:
 - **Custom** — game-specific custom template defined by the game team (`InAppCustomTemplateData`)
 - **One CTA Template** — Kinoa's predefined custom template with a single Call-To-Action button. Works out of the box for games already integrated with custom templates — no additional SDK changes required. Operator configures CTA content/rewards/triggers on Dashboard; developer ensures correct UI rendering
 
+### Template features — Milestones and Missions
+
+A Custom template can carry an `InAppFeature` on `InAppCustomTemplateData.Feature`.
+Two exist:
+
+- **Milestones** (`InAppMilestonesFeature`) — a single progress value with reward steps.
+  Documented in this module (see §"Configuration Notes" → *Milestones progress behavior*,
+  and `CollectMilestonesAsync` in §"Key APIs").
+- **Missions** (`InAppMissionsFeature`) — the richer type: a time-boxed **set** of
+  mission rows grouped by placement and chained by sub-mission, plus a shared
+  milestones **progress bar**. It adds four dedicated endpoints
+  (`CollectMissionsProgress`, `ReachMissionsProgress`,
+  `CollectMissionsMilestonesProgress`, `DeleteMissionsProgress`), a WebSocket command
+  (`InAppMissionsProgressChangedCommand`), and a sync-response category
+  (`InboxDetails.MissionProgressionInApps`). It is triggered, capped, inboxed, viewed,
+  and expired exactly like any other in-app in this module.
+
+  **Full reference: [`modules/15-missions.md`](15-missions.md)** — load it whenever the
+  game uses missions in-apps. Re-run shortcut: `/kinoa missions`. Missions ships no
+  service file of its own; the code lives in the `#region Missions` block of
+  `KinoaMessagingService.cs`. Missions requires a **game-registered** custom
+  `template_key` (no Kinoa-shipped missions template exists) and does **not** use
+  `InAppFeatureConfiguration.Register<T>()`.
+
 ### Command Messages
 There are two distinct concepts of "commands" in the Messaging module:
 1. **Command as a separate WebSocket message type** (`CommandMessage` via `OnCommandReceived`) — a standalone message, not an In-app. Instructs the game to perform an action.
@@ -200,7 +226,7 @@ Standalone Command message types:
 - Always call `Kinoa.Messaging.Initialize()` after SDK init (see 01-init)
 - Subscribe to `OnInAppReceived`/`OnCommandReceived` from a single entry point to avoid duplicate handlers. If re-subscribing is needed, always unsubscribe first (`-=` before `+=`) to prevent duplicates
 - Separate processing of Inbox vs Non-Inbox messages — they have different lifecycles
-- For Inbox messages via WebSocket, handle all In-app command types: `InAppReplacedCommand`, `InAppReminderCommand`, `InAppScoreChangedCommand`, `InAppMilestonesProgressChangedCommand`, `InAppInstanceUpdateCommand`. `InAppScoreChangedCommand` and `InAppMilestonesProgressChangedCommand` have a `DisplayOnProgressChange` flag — use it to decide whether to re-show the In-app or just refresh data silently
+- For Inbox messages via WebSocket, handle all In-app command types: `InAppReplacedCommand`, `InAppReminderCommand`, `InAppScoreChangedCommand`, `InAppMilestonesProgressChangedCommand`, `InAppMissionsProgressChangedCommand`, `InAppInstanceUpdateCommand`. `InAppScoreChangedCommand` and `InAppMilestonesProgressChangedCommand` have a `DisplayOnProgressChange` flag — use it to decide whether to re-show the In-app or just refresh data silently. `InAppMissionsProgressChangedCommand` has **no** such flag — the re-show decision is entirely the game's (see [`modules/15-missions.md`](15-missions.md))
 - For `RemovedInboxInAppsCommand`, remove the In-app game objects from the UI
 - Check `message.Capping?.EligibilityLimit` before calling `UseInboxMessageEligibilityAsync`
 - After `UseInboxMessageEligibilityAsync`, check `response.Data.Processed` to determine if reward can be granted, update local eligibility with `message.SetLocalEligibility(response.Data.ActualEligibility)`, and remove the UI element if `response.Data.Deleted` is true
@@ -243,11 +269,11 @@ Standalone Command message types:
 ## Common Mistakes
 - Duplicate event handlers from multiple subscriptions to `OnInAppReceived`/`OnCommandReceived` — subscribe from a single entry point, or unsubscribe first (`-=` before `+=`)
 - Not checking `message.Capping?.EligibilityLimit` before calling `UseInboxMessageEligibilityAsync` — messages without eligibility are limited by countdown timer only
-- Not implementing behavior for all In-app command types (`InAppReplacedCommand`, `InAppReminderCommand`, `InAppScoreChangedCommand`, `InAppMilestonesProgressChangedCommand`, `InAppInstanceUpdateCommand`) — the game UI must react to each command. Note: Sync API delivers instructions via `InboxDetails` categories (see 05-events-sync), while WebSocket In-apps carry instructions (commands) in the In-app message body (`InAppMessage.Command`)
+- Not implementing behavior for all In-app command types (`InAppReplacedCommand`, `InAppReminderCommand`, `InAppScoreChangedCommand`, `InAppMilestonesProgressChangedCommand`, `InAppMissionsProgressChangedCommand`, `InAppInstanceUpdateCommand`) — the game UI must react to each command. Note: Sync API delivers instructions via `InboxDetails` categories (see 05-events-sync), while WebSocket In-apps carry instructions (commands) in the In-app message body (`InAppMessage.Command`)
 - Not removing In-app from UI when `UseInboxMessageEligibilityAsync` returns `Deleted = true`
 - Not checking `response.Data.Processed` — if `false`, the eligibility limit is reached and reward should NOT be granted
 - Not handling `ResponseErrorCode.InAppNotFound` which indicates the message was deleted or expired server-side
 - Casting `message.Data` without checking the template type — use pattern matching (`InAppSimpleTemplateData`, `InAppCustomTemplateData`)
-- Casting `customTemplateData.Feature` without null-checking — not all Custom template messages have a Feature
+- Casting `customTemplateData.Feature` without null-checking — not all Custom template messages have a Feature. And cast to the **right** feature type: `InAppMilestonesFeature` vs `InAppMissionsFeature`. A wrong cast yields `null`, silently dropping the whole feature state
 - Using the obsolete `SetMessageHandlers` API instead of `OnInAppReceived`/`OnCommandReceived` events
 - Ignoring `InAppCountdownTimer.IsExpired` vs `EndTimestampWithExtraLifeTime` — the base timer may be expired but the In-app can still be usable during the extra-life period (for milestones reward collection)

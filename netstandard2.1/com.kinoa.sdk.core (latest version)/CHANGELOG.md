@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.0] - 2026-09-10
+
+### Added
+- Milestones In-app eligibility — collecting the final milestone of a milestones In-app message with the eligibility capping configured now claims one eligibility and resets the same instance, returned in the new `InAppMilestonesCollectResult.InApp` property.
+- Kinoa Integration Skill — **Missions in-apps** are now covered end-to-end: `/kinoa missions` explains the missions in-app type, its four endpoints (`CollectMissionsProgress`, `ReachMissionsProgress`, `CollectMissionsMilestonesProgress`, `DeleteMissionsProgress`), the mission-set / mission-row / progress-bar state model, how progression events advance rows, and how to route mission CTAs. See [AI Integration Skill Guide](https://kinoa.atlassian.net/wiki/spaces/KW/pages/828899329/AI+Integration+Skill+Guide).
+- Sample `KinoaMessagingService` now logs the full missions state (`LogMissionsFeature`) and handles `InAppMissionsProgressChangedCommand` in its command-describe switch.
+
+### Fixed
+- Sample `KinoaMessagingService.ProcessMissionsProgressInApps` reported the milestones command as its refresh reason instead of the missions command.
+- Sample `ReachMissionProgressOfInAppAsync` discarded the refreshed In-app the endpoint returns — it now routes it into the UI, which is the only way to see the new state (no WebSocket push follows this call).
+
 ## [2.22.1] - 2026-08-31
 
 ### Changed
