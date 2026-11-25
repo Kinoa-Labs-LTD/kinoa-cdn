@@ -1,0 +1,334 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>KinoaEmails</name>
+    </assembly>
+    <members>
+        <member name="P:Kinoa.Emails.Core.Network.NetworkConfig.EmailServiceUrl">
+            <summary>
+                Kinoa email service base URL.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Core.Network.NetworkConfig.EmailPath">
+            <summary>
+                Player email endpoint.
+            </summary>
+        </member>
+        <member name="T:Kinoa.Emails.Data.Constants.EmailLinkConstants">
+            <summary>
+                Kinoa email link constants.
+            </summary>
+        </member>
+        <member name="F:Kinoa.Emails.Data.Constants.EmailLinkConstants.InAppDataKey">
+            <summary>
+                The link query parameter (or link data key) that carries the In-app data JSON.
+            </summary>
+        </member>
+        <member name="T:Kinoa.Emails.Data.EmailRegistrationData">
+            <summary>
+                Player email registration model.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.EmailRegistrationData.Email">
+            <summary>
+                Player email address.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.EmailRegistrationData.Fields">
+            <summary>
+                Additional player fields (e.g. first_name). Keys are sent as is.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Data.EmailRegistrationData.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.Emails.Data.EmailRegistrationData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Data.EmailRegistrationData.#ctor(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.Emails.Data.EmailRegistrationData"/>.
+            </summary>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields.</param>
+        </member>
+        <member name="T:Kinoa.Emails.Data.Enum.KinoaEmailRegistrationStatus">
+            <summary>
+                Kinoa email registration status.
+            </summary>
+        </member>
+        <member name="F:Kinoa.Emails.Data.Enum.KinoaEmailRegistrationStatus.Unknown">
+            <summary>
+                Unknown or unsupported status.
+            </summary>
+        </member>
+        <member name="F:Kinoa.Emails.Data.Enum.KinoaEmailRegistrationStatus.Stored">
+            <summary>
+                Email is stored on Kinoa.
+            </summary>
+        </member>
+        <member name="T:Kinoa.Emails.Data.KinoaEmailInAppData">
+            <summary>
+                The In-app message data attached to the email link.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.KinoaEmailInAppData.InAppHash">
+            <summary>
+                The secret hash.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.KinoaEmailInAppData.InAppId">
+            <summary>
+                The In-app message identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.KinoaEmailInAppData.LaunchTs">
+            <summary>
+                The Email launch timestamp.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Data.KinoaEmailInAppData.#ctor">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.Emails.Data.KinoaEmailInAppData"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="T:Kinoa.Emails.Data.KinoaEmailRegistrationResult">
+            <summary>
+                Kinoa email registration result.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Data.KinoaEmailRegistrationResult.Status">
+            <summary>
+                Registration status. <see cref="F:Kinoa.Emails.Data.Enum.KinoaEmailRegistrationStatus.Unknown"/> for unsupported values.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Data.KinoaEmailRegistrationResult.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.Emails.Data.KinoaEmailRegistrationResult"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="T:Kinoa.Emails.Interfaces.ISDKEmailClient">
+            <summary>
+                SDK Email Client interface.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Interfaces.ISDKEmailClient.IsInitialized">
+            <summary>
+                Is Kinoa email client initialized.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Interfaces.ISDKEmailClient.Initialize">
+            <summary>
+                Initializes Kinoa email client.
+            </summary>
+            <returns>True if initialized; false if Kinoa Core SDK is not initialized.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.Interfaces.ISDKEmailClient.RegisterEmail(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Registers player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields (e.g. first_name).</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Interfaces.ISDKEmailClient.DeleteEmail(System.String)">
+            <summary>
+                Deletes player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="T:Kinoa.Emails.Logic.Extensions.EmailLinkParser">
+            <summary>
+                Parses Kinoa email links and link data into In-app creation parameters.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.Extensions.EmailLinkParser.GetLinkParameters(System.String)">
+            <summary>
+                Gets the URL-decoded query parameters of the link.
+            </summary>
+            <param name="url">The link URL (any scheme, e.g. https:// or a custom deep link scheme).</param>
+            <returns>
+                The query parameters by name, or an empty dictionary when the link has no query.
+                When a parameter repeats, the first value is kept.
+            </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.Extensions.EmailLinkParser.GetInAppCreationParams(System.String)">
+            <summary>
+                Gets the In-app creation parameters from the email link.
+            </summary>
+            <param name="url">The email link URL.</param>
+            <returns>The In-app creation parameters, or null when the link carries no valid Kinoa In-app data.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.Extensions.EmailLinkParser.GetInAppCreationParams(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+                Gets the In-app creation parameters from the link data
+                (e.g. deep link data passed by AppsFlyer, Branch or Adjust callbacks).
+            </summary>
+            <param name="data">The link data with the In-app data JSON under the "inAppData" key.</param>
+            <returns>The In-app creation parameters, or null when the data carries no valid Kinoa In-app data.</returns>
+        </member>
+        <member name="F:Kinoa.Emails.Logic.SDKEmailClient.kinoaService">
+            <summary>
+                Kinoa email service.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Logic.SDKEmailClient.Instance">
+            <summary>
+                SDK instance property
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.Logic.SDKEmailClient.IsInitialized">
+            <summary>
+                Is Kinoa email client initialized.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.SDKEmailClient.#ctor">
+            <summary>
+                Initialize the new instance of <see cref="T:Kinoa.Emails.Logic.SDKEmailClient"/>
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.SDKEmailClient.Initialize">
+            <summary>
+                Initializes Kinoa email client.
+            </summary>
+            <returns>True if initialized; false if Kinoa Core SDK is not initialized.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.SDKEmailClient.RegisterEmail(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Registers player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields (e.g. first_name).</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.SDKEmailClient.DeleteEmail(System.String)">
+            <summary>
+                Deletes player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.SDKEmailClient.CheckInitialized(System.String,Kinoa.Data.ResponseError@)">
+            <summary>
+                Checks that Kinoa email client is initialized.
+            </summary>
+            <param name="methodName">Invoked method name for logging.</param>
+            <param name="error">Error to return when the client is not initialized.</param>
+            <returns>True if initialized.</returns>
+        </member>
+        <member name="T:Kinoa.Emails.Logic.Services.KinoaService">
+            <summary>
+                Kinoa email service.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.Services.KinoaService.RegisterEmail(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Registers player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields (e.g. first_name).</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.Services.KinoaService.DeleteEmail(System.String)">
+            <summary>
+                Deletes player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID. Active player is used if null.</param>
+            <returns> Processed API response. </returns>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.WebRequests.RegisterEmail(System.String,Kinoa.Emails.Data.EmailRegistrationData)">
+            <summary>
+               Registers player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="registrationData">Email registration data.</param>
+        </member>
+        <member name="M:Kinoa.Emails.Logic.WebRequests.DeleteEmail(System.String)">
+            <summary>
+               Deletes player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+        </member>
+        <member name="T:Kinoa.Emails.SDK">
+            <summary>
+                Kinoa Emails SDK.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Emails.SDK.Version">
+            <summary>
+                Gets the SDK version number.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.Initialize">
+            <summary>
+                Initializes Kinoa Emails SDK. Call after Kinoa Core SDK initialization is completed.
+            </summary>
+            <returns>True if initialized; false if Kinoa Core SDK is not initialized.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.RegisterEmail(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Registers player email on Kinoa.
+            </summary>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields (e.g. first_name). Optional.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.RegisterEmail(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+                Registers player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <param name="email">Player email address.</param>
+            <param name="fields">Additional player fields (e.g. first_name). Optional.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.DeleteEmail">
+            <summary>
+                Deletes player email on Kinoa.
+            </summary>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.DeleteEmail(System.String)">
+            <summary>
+                Deletes player email on Kinoa.
+            </summary>
+            <param name="playerId">Kinoa Player ID.</param>
+            <returns> Processed API response.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.GetLinkParameters(System.String)">
+            <summary>
+                Gets the URL-decoded query parameters of the link. Does not require SDK initialization.
+            </summary>
+            <param name="url">The link URL (any scheme, e.g. https:// or a custom deep link scheme).</param>
+            <returns>
+                The query parameters by name, or an empty dictionary when the link has no query.
+                When a parameter repeats, the first value is kept.
+            </returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.GetInAppCreationParams(System.String)">
+            <summary>
+                Gets the In-app creation parameters from the Kinoa email link
+                (the In-app data JSON in the "inAppData" query parameter). Does not require SDK initialization.
+                Pass the result to <c>Kinoa.Messaging.CreateInAppMessageAsync</c> to create the In-app.
+            </summary>
+            <param name="url">The email link URL.</param>
+            <returns>The In-app creation parameters, or null when the link carries no valid Kinoa In-app data.</returns>
+        </member>
+        <member name="M:Kinoa.Emails.SDK.GetInAppCreationParams(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+                Gets the In-app creation parameters from the link data, e.g. deep link data passed
+                by AppsFlyer, Branch or Adjust callbacks (the In-app data JSON under the "inAppData" key).
+                Does not require SDK initialization.
+                Pass the result to <c>Kinoa.Messaging.CreateInAppMessageAsync</c> to create the In-app.
+            </summary>
+            <param name="data">The link data.</param>
+            <returns>The In-app creation parameters, or null when the data carries no valid Kinoa In-app data.</returns>
+        </member>
+    </members>
+</doc>

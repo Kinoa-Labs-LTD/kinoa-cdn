@@ -1,0 +1,29 @@
+{
+  "name": "com.kinoa.sdk.emails",
+  "version": "1.0.0",
+  "displayName": "Kinoa Emails",
+  "description": "Kinoa Emails: player email registration and deletion.",
+  "unity": "2022.3",
+  "licensesUrl": "https://bitbucket.org/kinoa-team/kinoa-cdn/src/master/netstandard2.1/com.kinoa.sdk.core-v2.11.0/LICENSE.md",
+  "dependencies": {
+    "com.kinoa.sdk.core": "2.24.0"
+  },
+  "keywords": [
+    "kinoa",
+    "sdk",
+    "email"
+  ],
+  "author": {
+    "name": "Kinoa",
+    "email": "m.kitela@kinoa.io",
+    "url": "https://kinoa.io"
+  },
+  "samples": [
+    {
+      "displayName": "Kinoa Services",
+      "description": "Contains sample Kinoa Emails service.",
+      "path": "Samples/Services"
+    }
+  ],
+  "hideInEditor": false
+}
