@@ -1,6 +1,6 @@
 {
   "name": "com.kinoa.sdk.core",
-  "version": "2.23.0",
+  "version": "2.24.0",
   "displayName": "Kinoa SDK (Core)",
   "description": "The best SaaS platform for managing mobile games activities, such as segmentation, communication with players, AB testing, monetization campaigns, etc...",
   "unity": "2021.2",

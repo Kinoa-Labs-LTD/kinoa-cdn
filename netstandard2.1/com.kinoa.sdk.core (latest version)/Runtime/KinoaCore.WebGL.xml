@@ -337,7 +337,9 @@
         </member>
         <member name="M:Kinoa.Core.Extensions.JsonNodeExtensions.ToJsonNodeInternalAsync``1(``0,System.Text.Json.JsonSerializerOptions)">
             <summary>
-                Creates a <see cref="T:System.Text.Json.Nodes.JsonNode"/> from an object.
+                Creates a <see cref="T:System.Text.Json.Nodes.JsonNode"/> from an object. The game may mutate the instance (e.g. the Player State)
+                while it is being serialized, so the serialization is retried on <see cref="T:System.InvalidOperationException"/>
+                through <see cref="T:Kinoa.Core.Utils.Helpers.SerializationRetryHelper"/>.
             </summary>
             <param name="instance">The <see cref="T:System.Object"/> instance.</param>
             <param name="options">Json serializer options.</param>
@@ -1120,6 +1122,11 @@
                 In-app messages endpoint.
             </summary>
         </member>
+        <member name="P:Kinoa.Core.Network.NetworkConfig.InAppCreateByEmailPath">
+            <summary>
+                In-app messages creation by Email endpoint.
+            </summary>
+        </member>
         <member name="P:Kinoa.Core.Network.NetworkConfig.FeaturesSettingsServiceUrl">
             <summary>
                 Kinoa Features Settings service base URL.
@@ -1208,6 +1215,11 @@
         <member name="P:Kinoa.Core.Network.NetworkConfig.InAppMessagesMissionsProgressReachPath">
             <summary>
                 InApp messages mission reach endpoint.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Core.Network.NetworkConfig.InAppMessagesMissionsProgressCollectV2Path">
+            <summary>
+                InApp messages mission collect V2 endpoint. Returns the refreshed In-app message.
             </summary>
         </member>
         <member name="P:Kinoa.Core.Network.NetworkConfig.InAppMessagesMissionsMilestonesCollectPath">
@@ -1410,6 +1422,31 @@
         <member name="F:Kinoa.Core.Network.ResponseErrorCode.SettingsLoadFailed">
             <summary>
                 Failed to load Game Settings.
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Network.ResponseErrorCode.EmailInvalid">
+            <summary>
+                The email address is invalid (Emails service).
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Network.ResponseErrorCode.FieldKeyUnknown">
+            <summary>
+                The personal info field key is not one of the game's extra fields keys on Kinoa Dashboard (Emails service).
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Network.ResponseErrorCode.EmailMissing">
+            <summary>
+                The email address is missing (Emails service).
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Network.ResponseErrorCode.FieldsMissing">
+            <summary>
+                The personal info fields are missing (Emails service).
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Network.ResponseErrorCode.FieldValueInvalid">
+            <summary>
+                The personal info field value is invalid (Emails service).
             </summary>
         </member>
         <member name="T:Kinoa.Core.Network.ResponseState">
@@ -2396,6 +2433,32 @@
             </summary>
             <param name="input">The input string to truncate.</param>
             <returns>The truncated string, or the original string if it is within the maximum length.</returns>
+        </member>
+        <member name="T:Kinoa.Core.Utils.Helpers.SerializationRetryHelper">
+            <summary>
+                Retries a serialization that fails with <see cref="T:System.InvalidOperationException"/> — what System.Text.Json
+                throws when a collection is modified while being written ("Collection was modified") — until it succeeds
+                or the retry window elapses. Used for objects the game mutates concurrently with the SDK: the Player State
+                snapshot of a game event (<c>JsonNodeExtensions.ToJsonNodeAsync</c>) and the Offline SDK local inbox save.
+                Any other exception propagates at once; after the window the last <see cref="T:System.InvalidOperationException"/>
+                is rethrown with its original stack trace.
+            </summary>
+        </member>
+        <member name="F:Kinoa.Core.Utils.Helpers.SerializationRetryHelper.RetryWindowMs">
+            <summary>
+                The default retry window in milliseconds.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Core.Utils.Helpers.SerializationRetryHelper.RetryOnInvalidOperationAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.String,System.Int32)">
+            <summary>
+                Runs <paramref name="operation"/>, retrying on <see cref="T:System.InvalidOperationException"/> for up to
+                <paramref name="retryWindowMs"/> milliseconds.
+            </summary>
+            <param name="operation">The serialization to run.</param>
+            <param name="subject">What is being serialized (for the log and the cancellation message).</param>
+            <param name="retryWindowMs">The retry window in milliseconds.</param>
+            <typeparam name="T">The serialization result type.</typeparam>
+            <returns>The serialization result.</returns>
         </member>
         <member name="T:Kinoa.Core.Utils.Helpers.SystemHelper">
             <summary>
@@ -5728,6 +5791,11 @@
                 In-app triggered manually (External Link).
             </summary>
         </member>
+        <member name="F:Kinoa.Data.Enum.InAppTriggerType.Email">
+            <summary>
+                In-app triggered by Email.
+            </summary>
+        </member>
         <member name="T:Kinoa.Data.Enum.KinoaLogOption">
             <summary>
                 Defines SDK logging options with various configuration flags.
@@ -8267,6 +8335,45 @@
                 The In-app web link click configuration.
             </summary>
         </member>
+        <member name="T:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams">
+            <summary>
+                The In-app message creation parameters by Email.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.PlayerID">
+            <summary>
+                The Player identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.Hash">
+            <summary>
+                The secret hash.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.ID">
+            <summary>
+                The In-app message identifier.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.LaunchTs">
+            <summary>
+                The Email launch timestamp.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.#ctor">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams"/>
+                with a parameterless constructor for deserialization purposes only.
+            </summary>
+        </member>
+        <member name="M:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams.#ctor(System.String,System.String,System.Int64)">
+            <summary>
+                Initializes the new instance of <see cref="T:Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams"/>.
+            </summary>
+            <param name="hash">The secret hash.</param>
+            <param name="messageID">The In-app message identifier.</param>
+            <param name="launchTs">The Email launch timestamp.</param>
+        </member>
         <member name="T:Kinoa.Data.Messaging.InApp.CreationParams.InAppByPushCreationParams">
             <summary>
                 The In-app message creation parameters by Push Notification.
@@ -8938,6 +9045,14 @@
             <summary>
                 The boolean value indicates whether this message
                 was triggered on an offline event/event from the previous game session.
+            </summary>
+        </member>
+        <member name="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsTriggeredLocally">
+            <summary>
+                The boolean value indicates whether this message was triggered locally by the Kinoa Offline SDK:
+                matched on the device against the cached offline in-app configurations and delivered to the local inbox.
+                Never set by the server. Not to be confused with <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsTriggeredOffline"/>, the server flag of a
+                message triggered by a buffered offline Game Event.
             </summary>
         </member>
         <member name="P:Kinoa.Data.Messaging.InApp.InAppMessage.TriggerType">
@@ -12984,6 +13099,14 @@
             <param name="cancellationToken">The cancellation token.</param>
             <returns>Processed API response with the created In-app message.</returns>
         </member>
+        <member name="M:Kinoa.Interfaces.IInAppMessaging.CreateInAppMessageAsync(Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams,System.Threading.CancellationToken)">
+            <summary>
+                Creates new In-app message by Email.
+            </summary>
+            <param name="inAppCreationParams">The In-app message creation parameters by Email.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Processed API response with the created In-app message.</returns>
+        </member>
         <member name="M:Kinoa.Interfaces.IInAppMessaging.GetInboxMessagesAsync(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
             <summary>
                 Gets inbox messages async, optionally filtered by viewed state.
@@ -13065,6 +13188,16 @@
             <param name="message">The inbox message.</param>
             <param name="cancellationToken">The cancellation token.</param>
             <returns>In-app missions progress collect response.</returns>
+        </member>
+        <member name="M:Kinoa.Interfaces.IInAppMessaging.CollectInAppMessageMissionsProgressAsync(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+                Collects the In-app message missions progress via the V2 endpoint.
+            </summary>
+            <param name="setNumber">The set number of the mission to collect.</param>
+            <param name="rowNumbers">The collection of rows of the set to collect.</param>
+            <param name="message">The inbox message.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Updated In-app message.</returns>
         </member>
         <member name="M:Kinoa.Interfaces.IInAppMessaging.ReachInAppMessageMissionsProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
             <summary>
@@ -14536,6 +14669,14 @@
             <param name="cancellationToken">The cancellation token.</param>
             <returns>Processed API response with the created In-app message.</returns>
         </member>
+        <member name="M:Kinoa.Logic.SDKClient.CreateInAppMessageAsync(Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams,System.Threading.CancellationToken)">
+            <summary>
+                Creates new In-app message by Email.
+            </summary>
+            <param name="inAppCreationParams">The In-app message creation parameters by Email.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Processed API response with the created In-app message.</returns>
+        </member>
         <member name="M:Kinoa.Logic.SDKClient.UpdateInboxMessagesAsync(System.Collections.Generic.IEnumerable{Kinoa.Data.Messaging.InApp.InAppMessage},System.Threading.CancellationToken)">
             <summary>
                 Updates inbox In-app messages async.
@@ -14586,6 +14727,16 @@
             <param name="message">The inbox message.</param>
             <param name="cancellationToken">The cancellation token.</param>
             <returns>In-app missions progress collect response.</returns>
+        </member>
+        <member name="M:Kinoa.Logic.SDKClient.CollectInAppMessageMissionsProgressAsync(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+                Collects the In-app message missions progress via the V2 endpoint.
+            </summary>
+            <param name="setNumber">The set number of the mission to collect.</param>
+            <param name="rowNumbers">The collection of rows of the set to collect.</param>
+            <param name="message">The inbox message.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Updated In-app message.</returns>
         </member>
         <member name="M:Kinoa.Logic.SDKClient.DeleteInAppMessageMissionsProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
             <summary>
@@ -16073,10 +16224,8 @@
         <member name="M:Kinoa.Logic.Services.InAppInboxService.AcknowledgeInboxMessagesViewAsync(System.Collections.Generic.IEnumerable{Kinoa.Data.Messaging.InApp.InAppMessage},System.Threading.CancellationToken)">
             <summary>
                 Acknowledges multiple inbox In-app messages as viewed async.
-                The SDK does not mutate the passed-in instances — the response's
-                <see cref="!:InAppAcknowledgeViewResult.Acknowledged"/> list contains fresh
-                <see cref="T:Kinoa.Data.Messaging.InApp.InAppMessage"/> objects with <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsViewed"/>
-                set to <c>true</c> for every UUID the server confirmed.
+                Sets <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsViewed"/> = <c>true</c> on every passed-in instance whose UUID the server
+                confirmed (<see cref="P:Kinoa.Data.Messaging.InApp.InAppAcknowledgeViewResult.AcknowledgedUuids"/>).
             </summary>
             <param name="messages">The In-app messages to mark as viewed.</param>
             <param name="cancellationToken">The cancellation token.</param>
@@ -16103,6 +16252,14 @@
                 Creates new In-app message by Push Notification.
             </summary>
             <param name="inAppCreationParams">The In-app message creation parameters by Push Notification.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Processed API response with the created In-app message.</returns>
+        </member>
+        <member name="M:Kinoa.Logic.Services.InAppInboxService.CreateInAppMessageAsync(Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams,System.Threading.CancellationToken)">
+            <summary>
+                Creates new In-app message by Email.
+            </summary>
+            <param name="inAppCreationParams">The In-app message creation parameters by Email.</param>
             <param name="cancellationToken">The cancellation token.</param>
             <returns>Processed API response with the created In-app message.</returns>
         </member>
@@ -16298,6 +16455,16 @@
             <param name="message">The inbox message.</param>
             <param name="cancellationToken">The cancellation token.</param>
             <returns>In-app missions progress collect response.</returns>
+        </member>
+        <member name="M:Kinoa.Logic.Services.InboxService`2.CollectInAppMessageMissionsProgressAsync(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+                Collects the In-app message missions progress via the V2 endpoint.
+            </summary>
+            <param name="setNumber">The set number of the mission to collect.</param>
+            <param name="rowNumbers">The collection of rows of the set to collect.</param>
+            <param name="message">The inbox message.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Updated In-app message.</returns>
         </member>
         <member name="M:Kinoa.Logic.Services.InboxService`2.DeleteInAppMessageMissionsProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
             <summary>
@@ -18198,6 +18365,14 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Processed API response with the created In-app message.</returns>
         </member>
+        <member name="M:Kinoa.Logic.WebRequests.CreateInAppMessage(Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams,System.Threading.CancellationToken)">
+            <summary>
+                Creates In-app message by Email.
+            </summary>
+            <param name="inAppCreationParams">The In-app message creation parameters by Email.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Processed API response with the created In-app message.</returns>
+        </member>
         <member name="M:Kinoa.Logic.WebRequests.CreateWebSocketClient(Kinoa.Core.Network.OnMessageReceived)">
             <summary>
                 Creates the WebSocket client for a specific player.
@@ -18248,6 +18423,16 @@
         <member name="M:Kinoa.Logic.WebRequests.CollectInAppMessageMissionProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
             <summary>
                 Collects the In-app message missions progress.
+            </summary>
+            <param name="setNumber">The set number of the mission to collect.</param>
+            <param name="rowNumbers">The collection of rows of the set to collect.</param>
+            <param name="message">Inbox message.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>API response.</returns>
+        </member>
+        <member name="M:Kinoa.Logic.WebRequests.CollectInAppMessageMissionProgressV2(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+                Collects the In-app message missions progress via the V2 endpoint.
             </summary>
             <param name="setNumber">The set number of the mission to collect.</param>
             <param name="rowNumbers">The collection of rows of the set to collect.</param>
@@ -18335,6 +18520,14 @@
             <param name="cancellationToken">The cancellation token.</param>
             <returns>Processed API response with the created In-app message.</returns>
         </member>
+        <member name="M:Kinoa.Messaging.CreateInAppMessageAsync(Kinoa.Data.Messaging.InApp.CreationParams.InAppByEmailCreationParams,System.Threading.CancellationToken)">
+            <summary>
+                Creates new In-app message by Email.
+            </summary>
+            <param name="inAppCreationParams">The In-app message creation parameters by Email.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Processed API response with the created In-app message.</returns>
+        </member>
         <member name="M:Kinoa.Messaging.GetInboxMessagesAsync(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
             <summary>
                 Gets inbox messages async, optionally filtered by viewed state.
@@ -18390,23 +18583,22 @@
         <member name="M:Kinoa.Messaging.AcknowledgeInboxMessageViewAsync(Kinoa.Data.Messaging.InApp.InAppMessage,System.Threading.CancellationToken)">
             <summary>
                 Acknowledges a single inbox In-app message as viewed by the player.
-                The SDK does not mutate the passed-in instance — use the freshly-deserialized
-                object in <c>response.Data.Acknowledged</c> or re-fetch via
-                <see cref="M:Kinoa.Messaging.GetInboxMessagesAsync(System.Nullable{System.Boolean},System.Threading.CancellationToken)"/> to observe the updated state.
+                When the server confirms the UUID (<see cref="P:Kinoa.Data.Messaging.InApp.InAppAcknowledgeViewResult.AcknowledgedUuids"/>),
+                the SDK sets <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsViewed"/> = <c>true</c> on the passed-in instance.
             </summary>
             <param name="message">The inbox In-app message to mark as viewed.</param>
             <param name="cancellationToken">The cancellation token.</param>
-            <returns>Processed API response with the acknowledged In-app message.</returns>
+            <returns>Processed API response with the acknowledged In-app message UUIDs.</returns>
         </member>
         <member name="M:Kinoa.Messaging.AcknowledgeInboxMessagesViewAsync(System.Collections.Generic.IEnumerable{Kinoa.Data.Messaging.InApp.InAppMessage},System.Threading.CancellationToken)">
             <summary>
                 Acknowledges multiple inbox In-app messages as viewed by the player in a single request.
-                The SDK does not mutate the passed-in instances — inspect
-                <c>response.Data.Acknowledged</c> for the fresh server-confirmed objects.
+                The SDK sets <see cref="P:Kinoa.Data.Messaging.InApp.InAppMessage.IsViewed"/> = <c>true</c> on every passed-in instance whose UUID
+                the server confirmed (<see cref="P:Kinoa.Data.Messaging.InApp.InAppAcknowledgeViewResult.AcknowledgedUuids"/>).
             </summary>
             <param name="messages">The inbox In-app messages to mark as viewed.</param>
             <param name="cancellationToken">The cancellation token.</param>
-            <returns>Processed API response with the list of acknowledged In-app messages.</returns>
+            <returns>Processed API response with the acknowledged In-app message UUIDs.</returns>
         </member>
         <member name="M:Kinoa.Messaging.UseInboxMessageEligibilityAsync(Kinoa.Data.Messaging.InApp.InAppMessage,System.Threading.CancellationToken)">
             <summary>
@@ -18434,6 +18626,18 @@
             <param name="message">The inbox message.</param>
             <param name="cancellationToken">The cancellation token.</param>
             <returns>In-app missions progress collect response.</returns>
+        </member>
+        <member name="M:Kinoa.Messaging.CollectMissionsProgressAsync(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+                Collects the In-app message missions progress.
+                Unlike the deprecated <see cref="M:Kinoa.Messaging.CollectMissionsProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)"/>, returns the refreshed
+                In-app message with the updated missions state — no WebSocket push follows.
+            </summary>
+            <param name="setNumber">The set number of the mission to collect.</param>
+            <param name="rowNumbers">The collection of rows of the set to collect.</param>
+            <param name="message">The inbox message.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Updated In-app message.</returns>
         </member>
         <member name="M:Kinoa.Messaging.ReachMissionsProgress(Kinoa.Interfaces.IInboxMessage,System.Int32,System.Collections.Generic.List{System.Int32},System.Threading.CancellationToken)">
             <summary>

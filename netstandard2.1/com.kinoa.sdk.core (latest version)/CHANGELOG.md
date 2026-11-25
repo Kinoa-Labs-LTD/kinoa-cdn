@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.24.0] - 2026-11-20
+
+### Added
+- In-app creation by Email — the new `Kinoa.Messaging.CreateInAppMessageAsync(InAppByEmailCreationParams)` overload creates an In-app message from the In-app data carried by an email token (same fields as `InAppByPushCreationParams`: hash, In-app ID, launch timestamp). A successful call reports the `in_app_created` event with `in_app_creation_source = "email"`.
+- `InAppTriggerType.Email` — In-app messages created by Email now carry the `Email` trigger type (previously parsed as `Unknown` and dropped by the In-app security validation). Like Push and Manual In-apps, they skip the sequence ID and checksum validation.
+- `ResponseErrorCode` email values returned by the Emails service: `EmailMissing`, `FieldsMissing`, `FieldValueInvalid` (alongside the existing `EmailInvalid` and `FieldKeyUnknown`).
+- Sample `KinoaMessagingService.CreateInAppMessageAsync(InAppByEmailCreationParams)` — routes the In-app created by Email into the UI.
+- Kinoa Integration Skill — `/kinoa messaging` documents the Email In-app creation path.
+
+## [2.23.1] - 2026-09-11
+
+### Changed
+- `CollectMissionsProgress` is deprecated. The new `CollectMissionsProgressAsync` returns the refreshed In-app message with the updated missions state in the response — no WebSocket push follows the call.
+- Missions global progress bar — the progress bar state (total score, milestone statuses) is now recalculated when mission rows are collected or reached.
+
 ## [2.23.0] - 2026-09-10
 
 ### Added

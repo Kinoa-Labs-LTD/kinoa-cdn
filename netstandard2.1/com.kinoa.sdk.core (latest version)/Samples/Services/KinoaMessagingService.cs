@@ -575,6 +575,28 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         return response;
     }
 
+    /// <summary>
+    ///     Creates a new In-app message by Email.
+    /// </summary>
+    public async Task<Response<InAppMessage>> CreateInAppMessageAsync(InAppByEmailCreationParams inAppCreationParams)
+    {
+        var response = await Kinoa.Messaging.CreateInAppMessageAsync(inAppCreationParams);
+        if (response.IsSuccessful())
+        {
+            //TODO: Replace with your game's UI logic.
+            KinoaUiService.Instance.CreateGameInApp(response.Data,
+                nameof(response), nameof(CreateInAppMessageAsync), addToDisplayQueue: true);
+            Log($"In-app '{inAppCreationParams.ID}' created by Email. Message UUID: {response.Data.Uuid}");
+        }
+        else
+        {
+            Log($"{nameof(CreateInAppMessageAsync)} status: {response.Status}. " +
+                $"Error: {response.Error?.Code.ToString() ?? "null"}");
+        }
+
+        return response;
+    }
+
     #endregion
 
     #region Milestones
@@ -756,18 +778,27 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
     /// <summary>
     ///     Collects missions progress for inbox In-app message.
     /// </summary>
-    public async Task<List<InAppMissionsProgressResult>> CollectMissionProgressOfInAppAsync(
+    public async Task<InAppMessage> CollectMissionProgressOfInAppAsync(
         InAppMessage inAppMessage,
         int setNumber,
         List<int> rowNumbers,
         CancellationToken cancellationToken = default)
     {
         var logBuilder = new StringBuilder();
-        var response = await Kinoa.Messaging.CollectMissionsProgress(inAppMessage,  setNumber, rowNumbers, cancellationToken);
+        var response = await Kinoa.Messaging.CollectMissionsProgressAsync(inAppMessage, setNumber, rowNumbers, cancellationToken);
 
         if (response.IsSuccessful() && response.Data != null)
         {
             logBuilder.Append($"{nameof(CollectMissionProgressOfInAppAsync)} for In-app message '{inAppMessage.Name}' '{inAppMessage.Uuid}':");
+            Debug.Log(logBuilder.ToString());
+
+            //TODO: Replace with your game's UI logic.
+            // Collect returns the refreshed In-app with the updated missions state —
+            // no WebSocket push follows, so route it into the UI here.
+            KinoaUiService.Instance.ReplaceGameInApps(new List<InAppMessage> { response.Data },
+                nameof(CollectMissionProgressOfInAppAsync), nameof(InAppMissionsProgressChangedCommand),
+                addToDisplayQueue: false);
+
             return response.Data;
         }
         
@@ -794,7 +825,7 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
             Debug.Log(logBuilder.ToString());
 
             //TODO: Replace with your game's UI logic.
-            // Reach is the only missions endpoint that returns the refreshed In-app —
+            // Reach returns the refreshed In-app —
             // no WebSocket push follows, so route it into the UI here.
             KinoaUiService.Instance.ReplaceGameInApps(new List<InAppMessage> { response.Data },
                 nameof(ReachMissionProgressOfInAppAsync), nameof(InAppMissionsProgressChangedCommand),
@@ -907,6 +938,7 @@ public class KinoaMessagingService : KinoaSingleton<KinoaMessagingService>
         sb.AppendLine($"SentTime: {inApp.SentTime}");
         sb.AppendLine($"IsInboxMessage: {inApp.IsInboxMessage}");
         sb.AppendLine($"IsTriggeredOffline: {inApp.IsTriggeredOffline}");
+        sb.AppendLine($"IsTriggeredLocally: {inApp.IsTriggeredLocally}");
         sb.AppendLine($"IsViewed: {inApp.IsViewed}");
 
         // Command

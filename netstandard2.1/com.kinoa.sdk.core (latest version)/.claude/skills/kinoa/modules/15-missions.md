@@ -46,7 +46,7 @@ SKILL.md §"Phase 6 — `--merge` mode".
 #### `KinoaMessagingService` `#region Missions` — new wrapper methods
 Adding a wrapper alongside the four shipped ones is permitted under
 alongside-permission (e.g. a `CollectAllReachedMissionsAsync` convenience that folds
-every `Reached` row of the active set into one `CollectMissionsProgress` call). The four
+every `Reached` row of the active set into one `CollectMissionsProgressAsync` call). The four
 shipped wrappers' `Kinoa.Messaging.*` call signatures are frozen.
 
 #### `ProcessMissionsProgressInApps` body
@@ -107,7 +107,7 @@ SKILL.md §"Closing summary".
 
 ## Key APIs
 
-All four are `static` on `Kinoa.Messaging`, take `IInboxMessage message` (pass the
+All five are `static` on `Kinoa.Messaging`, take `IInboxMessage message` (pass the
 `InAppMessage`), an `int setNumber`, a `List<int> rowNumbers`, and an optional
 `CancellationToken`. `setNumber` is `MissionState.CurrentSetNumber` (or a
 `PreviousSetProgress.SetNumber` still inside its extra-life window); `rowNumbers` are
@@ -115,19 +115,25 @@ All four are `static` on `Kinoa.Messaging`, take `IInboxMessage message` (pass t
 
 | API | Returns | Endpoint |
 |---|---|---|
-| `CollectMissionsProgress(message, setNumber, rowNumbers, ct)` | `Response<List<InAppMissionsProgressResult>>` | `POST /inappmessages/api/in-app-messages/missions/progress/collect` |
+| `CollectMissionsProgressAsync(message, setNumber, rowNumbers, ct)` | `Response<InAppMessage>` | `POST /inappmessages/api/in-app-messages/missions/progress/collect/v2` |
+| ~~`CollectMissionsProgress(message, setNumber, rowNumbers, ct)`~~ **deprecated** | `Response<List<InAppMissionsProgressResult>>` | `POST /inappmessages/api/in-app-messages/missions/progress/collect` |
 | `ReachMissionsProgress(message, setNumber, rowNumbers, ct)` | `Response<InAppMessage>` | `POST /inappmessages/api/in-app-messages/missions/progress/reach` |
 | `CollectMissionsMilestonesProgress(message, setNumber, rowNumbers, ct)` | `Response<List<InAppMissionsMilestonesResult>>` | `POST /inappmessages/api/in-app-messages/progress-bar/progress/collect` |
 | `DeleteMissionsProgress(message, setNumber, rowNumbers, ct)` | `Response` (no `Data`) | `DELETE /inappmessages/api/in-app-messages/missions/progress` |
 
-- `CollectMissionsProgress` — claims the reward of rows that already reached their goal.
-  Each `InAppMissionsProgressResult` carries `SetNumber`, `RowNumber`, and
-  `Status` (`InAppMissionsProgressStatus`). **Returns no refreshed in-app** — apply the
-  `Collected` status to your local model from the result list.
+- `CollectMissionsProgressAsync` — claims the reward of rows that already reached their
+  goal, and **adds each collected row's `ProgressBarScore` to
+  `ProgressBarState.TotalScore`**, flipping any crossed milestone from `Closed` to
+  `Reached`. **Returns the refreshed `InAppMessage`** — route `response.Data` into the
+  UI instead of waiting for a WebSocket push; none follows.
+- `CollectMissionsProgress` — **deprecated, use `CollectMissionsProgressAsync`.** Same
+  collection, older endpoint: each `InAppMissionsProgressResult` carries `SetNumber`,
+  `RowNumber`, and `Status` (`InAppMissionsProgressStatus`), and **no refreshed in-app
+  is returned** — the `Collected` status has to be applied to the local model from the
+  result list.
 - `ReachMissionsProgress` — advances the named rows straight to
-  `CurrentScore == GoalScore` (`Status = Reached`), adds each row's `ProgressBarScore`
-  to `ProgressBarState.TotalScore`, and flips any crossed milestone from `Closed` to
-  `Reached`. **This is the one missions call that returns the refreshed
+  `CurrentScore == GoalScore` (`Status = Reached`). The progress bar does **not** move
+  here: `TotalScore` accrues on collection, not on reaching. **Returns the refreshed
   `InAppMessage`** — route `response.Data` into the UI instead of waiting for a
   WebSocket push.
 - `CollectMissionsMilestonesProgress` — claims progress-bar milestone rewards. Note the
@@ -184,8 +190,8 @@ Its state is a **set** of mission rows plus a shared **progress bar** of milesto
 - Rows with `PlacementNumber`/`SubMissionNumber` semantics of "common" (no
   sub-mission number) form a shared track, tracked by
   `FinishedCommonSubmissionsRows`.
-- Each row that reaches its goal contributes its `ProgressBarScore` to
-  `ProgressBarState.TotalScore`, which drives the milestone steps.
+- Each row contributes its `ProgressBarScore` to `ProgressBarState.TotalScore` when it
+  is **collected** (not when it reaches its goal), which drives the milestone steps.
 - Sets are time-boxed (`StartTimestamp` / `EndTimestamp`); a finished set may still be
   visible via `PreviousSetProgress` while its rewards are collectable.
 
@@ -218,8 +224,9 @@ refreshes silently (`addToDisplayQueue: false`).
 - **Common missions unlock after a placement's chain completes.** Once every
   sub-mission of a placement has been reached, the common rows enter `ActiveMissions`;
   `FinishedCommonSubmissionsRows` records which common rows are done.
-- **Progress bar accrual** — `ProgressBarState.TotalScore` grows by each reached row's
-  `ProgressBarScore`. Milestone steps whose `Score` threshold is crossed flip from
+- **Progress bar accrual happens on collect, not on reach.** `ProgressBarState.TotalScore`
+  grows by each **collected** row's `ProgressBarScore` — a row sitting at `Reached`
+  awaiting collection contributes nothing yet. Milestone steps whose `Score` threshold is crossed flip from
   `Closed` to `Reached` and become collectable via
   `CollectMissionsMilestonesProgress`. Progress is **not reset** on reaching a
   milestone — the same accumulate-don't-reset rule as template milestones (module 06).
@@ -253,8 +260,9 @@ rewards do (`Button.Resources`, `Button.ClickConfig`).
 - Read the feature once per update: `(message.Data as InAppCustomTemplateData)?.Feature as InAppMissionsFeature`, and null-guard it — a non-missions in-app returns `null`
 - Sort `ActiveMissions` by `SubMissionNumber` before rendering; group by `PlacementNumber`
 - Update the existing UI object in place on progression (stable UUID); do not spawn a second one
-- Route `ReachMissionsProgress`'s returned `InAppMessage` straight into the UI refresh path — it is fresh state, and no WebSocket push follows
-- After `CollectMissionsProgress` / `CollectMissionsMilestonesProgress`, apply the returned per-row `Status` values to the local model — no refreshed in-app arrives
+- Route the `InAppMessage` returned by `CollectMissionsProgressAsync` / `ReachMissionsProgress` straight into the UI refresh path — it is fresh state, and no WebSocket push follows
+- Expect the progress bar to move on `CollectMissionsProgressAsync`, not on progression or reach — read `ProgressBarState.TotalScore` off the in-app the collect call returns
+- After `CollectMissionsMilestonesProgress`, apply the returned per-row `Status` values to the local model — no refreshed in-app arrives
 - After `DeleteMissionsProgress`, drop the rows locally; the next progression event brings the authoritative state
 - Batch `rowNumbers`: one call per set covering every eligible row beats one call per row
 - Acknowledge view after a missions refresh — the server resets `IsViewed = false` on every new `Command`, missions included (module 06)
@@ -279,8 +287,10 @@ rewards do (`Button.Resources`, `Button.ClickConfig`).
 - Casting `custom.Feature` to `InAppMilestonesFeature` on a missions in-app — the cast yields `null` and the missions state silently disappears. Match the concrete type: `InAppMissionsFeature` vs `InAppMilestonesFeature`
 - Calling `Kinoa.Messaging.CollectMilestonesAsync` for missions milestones — that collects *template* milestones. Missions milestones use `CollectMissionsMilestonesProgress` (different endpoint, different result type)
 - Reading `DisplayOnProgressChange` off `InAppMissionsProgressChangedCommand` — the type has no such property; it is not a `InAppMilestonesProgressChangedCommand`
-- Awaiting a WebSocket push after `CollectMissionsProgress` or `DeleteMissionsProgress` — neither returns or triggers a refreshed in-app. Only `ReachMissionsProgress` returns fresh state
-- Discarding `ReachMissionsProgress`'s `response.Data` — that `InAppMessage` is the updated in-app; throwing it away forces an unnecessary round trip
+- Awaiting a WebSocket push after `CollectMissionsProgressAsync`, `ReachMissionsProgress` or `DeleteMissionsProgress` — the first two already return the fresh in-app, and `DeleteMissionsProgress` neither returns nor triggers one
+- Discarding `CollectMissionsProgressAsync`'s or `ReachMissionsProgress`'s `response.Data` — that `InAppMessage` is the updated in-app; throwing it away forces an unnecessary round trip
+- Still calling the deprecated `CollectMissionsProgress` — it hits the pre-v2 endpoint and returns only per-row statuses, so the refreshed progress bar has to be fetched separately
+- Expecting `ProgressBarState.TotalScore` to advance on a progression event or on `ReachMissionsProgress` — it accrues when rows are collected
 - Passing `PlacementNumber` or `SubMissionNumber` where `rowNumbers` is expected — the endpoints key on `RowNumber`
 - Assuming the next sub-mission appears only after collection — it appears on *Reached*, so a placement can hold a `Reached` and an `Active` row simultaneously
 - Rendering `ActiveMissions` in arrival order — order is not guaranteed; sort by `SubMissionNumber` within `PlacementNumber`
